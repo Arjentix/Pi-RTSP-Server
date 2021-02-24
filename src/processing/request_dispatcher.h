@@ -24,6 +24,63 @@ SOFTWARE.
 
 #pragma once
 
-class RequestDispatcher {
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <unordered_set>
+#include <memory>
 
+#include "handler.h"
+#include "rtsp/request.h"
+#include "rtsp/response.h"
+
+namespace processing {
+
+/**
+ * @brief Request parameters that distinguish requests from handlers point of view
+ */
+struct RequestParams {
+  rtsp::Method method;
+  std::string url;
 };
+
+bool operator==(const RequestParams &lhs, const RequestParams &rhs);
+
+struct RequestParamsHash {
+  std::size_t operator()(const RequestParams &params) const;
+};
+
+
+/**
+ * @brief RequestDispatcher allows to register handlers and then dispatch RTSP
+ * request to the qualified handler returning RTSP response
+ */
+class RequestDispatcher {
+ public:
+  /**
+   * @brief Register new handler, that will process request with specified params
+   *
+   * @param params Unique request parameters
+   * @param handler_ptr Pointer to the Handler inheritor
+   */
+  void RegisterHandler(const RequestParams &params,
+                       std::shared_ptr<Handler> handler_ptr);
+
+  /**
+   * @brief Dispatch request to the specified handler and get a response
+   *
+   * @param request Request to dispatch
+   * @return Response from handler if handler was found
+   * @return Response with error in other way
+   */
+  rtsp::Response Dispatch(const rtsp::Request &request) const;
+
+ private:
+  //! Request params -> Handler inheritor
+  std::unordered_map<RequestParams, std::shared_ptr<Handler>,
+                     RequestParamsHash> params_to_handler_;
+  std::unordered_set<rtsp::Method> acceptable_methods_; //!< All acceptable methods
+  std::unordered_set<std::string_view> acceptable_urls_; //!< All acceptable urls
+};
+
+} // namespace processing

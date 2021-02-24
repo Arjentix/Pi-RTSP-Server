@@ -38,8 +38,8 @@ void SignalHandler(int) {
   stop_flag = true;
 }
 
-RequestDispatcher BuildRequestDispatcher() {
-  return RequestDispatcher();
+processing::RequestDispatcher BuildRequestDispatcher() {
+  return processing::RequestDispatcher();
 }
 
 } // namespace
@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
   try {
     signal(SIGINT, SignalHandler);
 
-    RequestDispatcher dispatcher = BuildRequestDispatcher();
+    processing::RequestDispatcher dispatcher = BuildRequestDispatcher();
 
     constexpr int kRtspPortNumber = 554;
     rtsp::Server server(kRtspPortNumber);
@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
     std::cout << "Server started" << std::endl;
     while (!stop_flag) {
       rtsp::ClientConnection client = server.ConnectClient();
-      rtsp::Response response = dispatcher.dispatch(client.GetRequest());
+      rtsp::Response response = dispatcher.Dispatch(client.GetRequest());
       client.SendResponce(response);
     }
   } catch (const std::exception &ex) {
