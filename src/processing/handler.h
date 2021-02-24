@@ -24,6 +24,25 @@ SOFTWARE.
 
 #pragma once
 
-class Handler {
+#include "rtsp/request.h"
+#include "rtsp/response.h"
 
+namespace processing {
+
+/**
+ * @brief Base class for RTSP requests handlers
+ */
+class Handler {
+ public:
+  virtual ~Handler() {}
+
+  /**
+   * @brief Handle request and get response
+   *
+   * @param request An RTSP request to be handled
+   * @return RTSP response
+   */
+  virtual rtsp::Response handle(const rtsp::Request &request) = 0;
 };
+
+} // namespace processing
