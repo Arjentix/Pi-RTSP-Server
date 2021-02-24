@@ -24,6 +24,16 @@ SOFTWARE.
 
 #include "response.h"
 
+#include <utility>
+
 namespace rtsp {
+
+Response::Response(int code, std::string description,
+                   Headers headers, std::string body) :
+version(1.0),
+code(code),
+description(std::move(description)),
+headers(std::move(headers)),
+body(std::move(body)) {}
 
 } // namespace rtsp

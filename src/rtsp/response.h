@@ -24,10 +24,22 @@ SOFTWARE.
 
 #pragma once
 
+#include <string>
+#include <unordered_map>
+
 namespace rtsp {
 
-class Response {
+struct Response {
+  using Headers = std::unordered_map<std::string, std::string>;
 
+  Response(int code, std::string description,
+           Headers headers = Headers(), std::string body = "");
+
+  float version;
+  int code;
+  std::string description;
+  Headers headers;
+  std::string body;
 };
 
 } // namespace rtsp
