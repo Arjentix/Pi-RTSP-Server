@@ -24,10 +24,38 @@ SOFTWARE.
 
 #pragma once
 
+#include <string>
+#include <unordered_map>
+
 namespace rtsp {
 
-class Request {
+/**
+ * @brief All possible Client -> Server methods
+ */
+enum class Method {
+  kDescribe,
+  kAnnounce,
+  kGetParameter,
+  kOptions,
+  kPause,
+  kPlay,
+  kRecord,
+  kSetup,
+  kSetParameter,
+  kTeardown
+};
 
+/**
+ * @brief Request from Client to Server
+ */
+struct Request {
+  using Headers = std::unordered_map<std::string, std::string>;
+
+  Method method;
+  std::string url;
+  float version;
+  Headers headers;
+  std::string body;
 };
 
 } // namespace rtsp
