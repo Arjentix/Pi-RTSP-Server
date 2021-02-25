@@ -22,75 +22,42 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "socket.h"
+#include "server_socket.h"
 
 #include <cstring>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <unistd.h>
-
-#include <memory>
+#include <arpa/inet.h>
 
 #include "exception.h"
 
 namespace sock {
 
-Socket::Socket(Type type):
-descriptor_(0),
-is_moved_(false) {
-  int real_type = 0;
-  switch (type) {
-    case Type::kTcp:
-      real_type = SOCK_STREAM;
-      break;
-    case Type::kUdp:
-      real_type = SOCK_DGRAM;
-      break;
-    default:
-      real_type = 0;
+ServerSocket::ServerSocket(Type type, int port_number):
+Socket(type) {
+  sockaddr_in server_addr;
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_addr.s_addr = htons(INADDR_ANY);
+  server_addr.sin_port = htons(port_number);
+
+  if (bind(descriptor_, reinterpret_cast<sockaddr *>(&server_addr), sizeof(server_addr)) < 0) {
+    throw BindError(strerror(errno));
   }
 
-  descriptor_ = socket(AF_INET, real_type, 0);
-  if (descriptor_ == -1) {
-    throw SocketException("Can't create socket");
+  if (listen(descriptor_, 1) < 0) {
+    throw ListenError(strerror(errno));
   }
 }
 
-Socket::Socket(int descriptor) :
-descriptor_(descriptor),
-is_moved_(false) {}
-
-Socket::Socket(Socket &&other) :
-descriptor_(other.descriptor_),
-is_moved_(false) {
-  other.is_moved_ = true;
-}
-
-Socket::~Socket() {
-  if (!is_moved_) {
-    close(descriptor_);
-  }
-}
-
-
-std::string Socket::Read(int n) {
-  auto buf_ptr = std::make_unique<char []>(n);
-  int res = recv(descriptor_, buf_ptr.get(), n, 0);
-
-  if (res < 0) {
-    throw ReadError(strerror(errno));
-  }
-  if (res == 0 && n != 0) {
-    throw ReadError("Socket is closed");
+std::pair<Socket, std::string> ServerSocket::Accept() const {
+  sockaddr_in client_addr;
+  socklen_t size = sizeof(client_addr);
+  int client_descriptor = accept(descriptor_, reinterpret_cast<sockaddr *>(&client_addr), &size);
+  if (client_descriptor < 0) {
+    throw AcceptError(strerror(errno));
   }
 
-  return buf_ptr.get();
-}
-
-void Socket::Send(std::string_view str) {
-  if (send(descriptor_, str.data(), str.length(), 0) < 0) {
-    throw SendError(strerror(errno));
-  }
+  return {Socket(client_descriptor), inet_ntoa(client_addr.sin_addr)};
 }
 
 } // namespace sock

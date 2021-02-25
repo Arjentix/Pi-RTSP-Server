@@ -22,30 +22,34 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "exception.h"
+#pragma once
+
+#include <utility>
+
+#include "socket.h"
 
 namespace sock {
 
-SocketException::SocketException(std::string_view message) :
-std::runtime_error(message.data()) {}
+/**
+ * @brief Socket specified for server-side usage
+ */
+class ServerSocket : public Socket {
+ public:
+  /**
+   * @brief Construct a new ServerSocket object
+   * @details Invoke system calls to bind() and listen()
+   *
+   * @param type Type of the ServerSocket
+   * @param port_number Port of the ServerSocket
+   */
+  ServerSocket(Type type, int port_number);
 
-ReadError::ReadError(std::string_view message) :
-SocketException(message) {}
-
-SendError::SendError(std::string_view message) :
-SocketException(message) {}
-
-
-ServerSocketException::ServerSocketException(std::string_view message) :
-SocketException(message) {}
-
-BindError::BindError(std::string_view message) :
-ServerSocketException(message) {}
-
-ListenError::ListenError(std::string_view message) :
-ServerSocketException(message) {}
-
-AcceptError::AcceptError(std::string_view message) :
-ServerSocketException(message) {}
+  /**
+   * @brief Accept client connection
+   *
+   * @return New socket, associated with client, and its ip address
+   */
+  std::pair<Socket, std::string> Accept() const;
+};
 
 } // namespace sock

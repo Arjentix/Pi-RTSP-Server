@@ -46,4 +46,28 @@ class SendError : public SocketException {
   SendError(std::string_view message);
 };
 
+
+/**
+ * @brief Base class for ServerSocket exceptions
+ */
+class ServerSocketException : public SocketException {
+ public:
+  ServerSocketException(std::string_view message);
+};
+
+class BindError : public ServerSocketException {
+ public:
+  BindError(std::string_view message);
+};
+
+class ListenError : public ServerSocketException {
+ public:
+  ListenError(std::string_view message);
+};
+
+class AcceptError : public ServerSocketException {
+ public:
+  AcceptError(std::string_view message);
+};
+
 } // namespace sock

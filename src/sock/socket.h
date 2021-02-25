@@ -47,7 +47,14 @@ class Socket {
    *
    * @param type Type of the Socket
    */
-  Socket(Type type);
+  explicit Socket(Type type);
+
+  /**
+   * @brief Construct a new Socket object using provided descriptor
+   *
+   * @param descriptor Valid socket descriptor
+   */
+  explicit Socket(int descriptor);
 
   Socket(Socket&& other);
 
@@ -72,8 +79,10 @@ class Socket {
 
   Socket &operator=(Socket &&other);
 
- private:
+ protected:
   int descriptor_; //!< Socket descriptor
+
+ private:
   bool is_moved_; //!< True, if Socket was moved
 };
 

@@ -9,6 +9,9 @@ set(SOURCES
     ${SRC_DIR}/main.cpp
     ${SRC_DIR}/rtsp/response.cpp
     ${SRC_DIR}/processing/request_dispatcher.cpp
+    ${SRC_DIR}/sock/exception.cpp
+    ${SRC_DIR}/sock/socket.cpp
+    ${SRC_DIR}/sock/server_socket.cpp
 )
 
 # Disabling OpenCv searching for raspicam build
