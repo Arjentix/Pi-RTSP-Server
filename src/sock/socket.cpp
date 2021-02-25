@@ -93,4 +93,11 @@ void Socket::Send(std::string_view str) {
   }
 }
 
+Socket &Socket::operator=(Socket &&other) {
+  descriptor_ = other.descriptor_;
+  other.is_moved_ = true;
+
+  return *this;
+}
+
 } // namespace sock
