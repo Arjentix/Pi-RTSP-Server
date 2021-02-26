@@ -26,6 +26,8 @@ SOFTWARE.
 
 #include <string>
 #include <string_view>
+#include <sstream>
+#include <ostream>
 
 namespace sock {
 
@@ -83,7 +85,38 @@ class Socket {
   int descriptor_; //!< Socket descriptor
 
  private:
+  template <typename T>
+  friend Socket &operator<<(Socket &socket, const T &obj);
+
+  friend Socket &operator<<(Socket &socket, std::ostream &(*f)(std::ostream &));
+
   bool is_moved_; //!< True, if Socket was moved
+  std::ostringstream ss_buffer_; //!< Buffer for operator<<
 };
+
+/**
+ * @brief Output operator for socket
+ * @details Store everything in buffer until std::endl is passed
+ *
+ * @tparam Any type that can be printed into a std::ostringstream
+ * @param socket Socket that will store info
+ * @param obj Object to be printed
+ * @return Provided socket
+ */
+template <typename T>
+Socket &operator<<(Socket &socket, const T &obj) {
+  socket.ss_buffer_ << obj;
+  return socket;
+}
+
+/**
+ * @brief Output operator for std::endl and etc.
+ * @details If std::endl is passed, than internal buffer will be sent to socket
+ *
+ * @param socket Socket, which buffer will be processed
+ * @param f Pointer to function that process ostream object
+ * @return Provided socket
+ */
+Socket &operator<<(Socket &socket, std::ostream &(*f)(std::ostream &));
 
 } // namespace sock

@@ -100,4 +100,15 @@ Socket &Socket::operator=(Socket &&other) {
   return *this;
 }
 
+Socket &operator<<(Socket &socket, std::ostream &(*f)(std::ostream &)) {
+  if (f == &(std::endl<char, std::char_traits<char>>)) {
+    socket.Send(socket.ss_buffer_.str());
+    socket.ss_buffer_.clear();
+  } else {
+    f(socket.ss_buffer_);
+  }
+
+  return socket;
+}
+
 } // namespace sock
