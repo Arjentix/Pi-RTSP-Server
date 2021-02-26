@@ -26,8 +26,20 @@ SOFTWARE.
 
 #include <string>
 #include <unordered_map>
+#include <stdexcept>
+
+#include "sock/socket.h"
 
 namespace rtsp {
+
+/**
+ * @brief Exception, indicating that an error occurred during request parsing
+ */
+class ParseError : public std::runtime_error {
+ public:
+  ParseError(std::string_view message);
+};
+
 
 /**
  * @brief All possible Client -> Server methods
@@ -45,11 +57,28 @@ enum class Method {
   kTeardown
 };
 
+
+/**
+ * @brief Specific hasher for header names to provide case-insensitivity
+ */
+struct HeaderNameHash {
+  std::size_t operator()(std::string header_name) const;
+};
+
+/**
+ * @brief Specific equal for header names to provide case-insensitivity
+ */
+struct HeaderNameEqual {
+   bool operator()(std::string lhs, std::string rhs) const;
+};
+
+
 /**
  * @brief Request from Client to Server
  */
 struct Request {
-  using Headers = std::unordered_map<std::string, std::string>;
+  using Headers = std::unordered_map<std::string, std::string,
+                                     HeaderNameHash, HeaderNameEqual>;
 
   Method method;
   std::string url;
@@ -57,5 +86,7 @@ struct Request {
   Headers headers;
   std::string body;
 };
+
+sock::Socket &operator>>(sock::Socket &socket, Request &request);
 
 } // namespace rtsp
