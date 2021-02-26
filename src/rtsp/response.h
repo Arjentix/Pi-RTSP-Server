@@ -26,9 +26,13 @@ SOFTWARE.
 
 #include <string>
 #include <unordered_map>
+#include <ostream>
 
 namespace rtsp {
 
+/**
+ * @brief Response from Server to Client
+ */
 struct Response {
   using Headers = std::unordered_map<std::string, std::string>;
 
@@ -41,5 +45,7 @@ struct Response {
   Headers headers;
   std::string body;
 };
+
+std::ostream &operator<<(std::ostream &os, const Response &response);
 
 } // namespace rtsp
