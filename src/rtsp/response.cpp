@@ -25,10 +25,11 @@ SOFTWARE.
 #include "response.h"
 
 #include <utility>
+#include <iomanip>
 
 namespace std {
 
-std::ostream &operator<<(std::ostream &os,
+static std::ostream &operator<<(std::ostream &os,
                          const rtsp::Response::Headers &headers) {
   for (const auto &[key, value] : headers) {
     os << key << ": " << value << "\r\n";
@@ -51,7 +52,7 @@ headers(std::move(headers)),
 body(std::move(body)) {}
 
 std::ostream &operator<<(std::ostream &os, const Response &response) {
-  os << "RTSP/" << response.version << " "
+  os << "RTSP/" << std::setprecision(2) << response.version << " "
      << response.code << " " << response.description << "\r\n"
      << response.headers << "\r\n\r\n"
      << response.body;
