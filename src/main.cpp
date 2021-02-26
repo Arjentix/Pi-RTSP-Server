@@ -23,12 +23,12 @@ SOFTWARE.
 */
 
 #include <cstdlib>
-#include <signal.h>
+#include <csignal>
 
 #include <iostream>
 
-#include "rtsp/server.h"
 #include "processing/request_dispatcher.h"
+#include "sock/server_socket.h"
 
 namespace {
 
@@ -44,20 +44,22 @@ processing::RequestDispatcher BuildRequestDispatcher() {
 
 } // namespace
 
-int main(int argc, char **argv) {
+int main(int /*argc*/, char **/*argv*/) {
   try {
     signal(SIGINT, SignalHandler);
 
     processing::RequestDispatcher dispatcher = BuildRequestDispatcher();
 
     constexpr int kRtspPortNumber = 554;
-    rtsp::Server server(kRtspPortNumber);
 
+    sock::ServerSocket server_socket(sock::Type::kTcp, kRtspPortNumber);
     std::cout << "Server started" << std::endl;
     while (!stop_flag) {
-      rtsp::ClientConnection client = server.ConnectClient();
-      rtsp::Response response = dispatcher.Dispatch(client.GetRequest());
-      client.SendResponce(response);
+      sock::Socket socket = server_socket.Accept().first;
+      rtsp::Request request;
+      socket >> request;
+      rtsp::Response response = dispatcher.Dispatch(request);
+      socket << response << std::endl;
     }
   } catch (const std::exception &ex) {
     std::cerr << "Error: " << ex.what() << std::endl;
