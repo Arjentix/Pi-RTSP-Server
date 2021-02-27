@@ -27,6 +27,8 @@ SOFTWARE.
 #include <utility>
 #include <functional>
 
+#include "handlers/options.h"
+
 namespace {
 
 const char kCSeq[] = "CSeq";
@@ -48,6 +50,16 @@ std::size_t RequestParamsHash::operator()(const RequestParams &params) const {
 }
 
 
+RequestDispatcher::RequestDispatcher() :
+params_to_handler_(),
+acceptable_methods_(),
+acceptable_urls_() {
+  options_handler_ptr_ =
+      std::make_shared<processing::handlers::Options>(acceptable_methods_);
+  RegisterHandler({rtsp::Method::kOptions, "*"},
+                  options_handler_ptr_);
+}
+
 void RequestDispatcher::RegisterHandler(const RequestParams &params,
                                         std::shared_ptr<Handler> handler_ptr) {
   auto res = params_to_handler_.insert({params, handler_ptr});
@@ -57,16 +69,16 @@ void RequestDispatcher::RegisterHandler(const RequestParams &params,
   }
 }
 
-rtsp::Response RequestDispatcher::Dispatch(const rtsp::Request &request) const {
+rtsp::Response RequestDispatcher::Dispatch(const rtsp::Request &request) {
   if (!request.headers.count(kCSeq)) {
     return {400, "Bad Request"};
   }
 
   rtsp::Response response = {
-      0, "",
-      {
-          {kCSeq, request.headers.at(kCSeq)}
-      }
+    0, "",
+    {
+      {kCSeq, request.headers.at(kCSeq)}
+    }
   };
 
   if (request.version != 1.0) {
@@ -78,8 +90,12 @@ rtsp::Response RequestDispatcher::Dispatch(const rtsp::Request &request) const {
   try {
     rtsp::Response::Headers old_response_headers = response.headers;
 
-    RequestParams params = {request.method, request.url};
-    response = params_to_handler_.at(std::move(params))->handle(request);
+    if (request.method == rtsp::Method::kOptions) {
+      response = options_handler_ptr_->handle(request);
+    } else {
+      RequestParams params = {request.method, request.url};
+      response = params_to_handler_.at(std::move(params))->handle(request);
+    }
 
     response.headers.merge(std::move(old_response_headers));
   }

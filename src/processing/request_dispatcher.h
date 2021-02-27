@@ -31,8 +31,6 @@ SOFTWARE.
 #include <memory>
 
 #include "handler.h"
-#include "rtsp/request.h"
-#include "rtsp/response.h"
 
 namespace processing {
 
@@ -57,8 +55,11 @@ struct RequestParamsHash {
  */
 class RequestDispatcher {
  public:
+  RequestDispatcher();
+
   /**
    * @brief Register new handler, that will process request with specified params
+   * @details OPTIONS handler is generating automatically, no need to register it
    *
    * @param params Unique request parameters
    * @param handler_ptr Pointer to the Handler inheritor
@@ -73,7 +74,7 @@ class RequestDispatcher {
    * @return Response from handler if handler was found
    * @return Response with error in other way
    */
-  rtsp::Response Dispatch(const rtsp::Request &request) const;
+  rtsp::Response Dispatch(const rtsp::Request &request);
 
  private:
   //! Request params -> Handler inheritor
@@ -81,6 +82,7 @@ class RequestDispatcher {
                      RequestParamsHash> params_to_handler_;
   std::unordered_set<rtsp::Method> acceptable_methods_; //!< All acceptable methods
   std::unordered_set<std::string_view> acceptable_urls_; //!< All acceptable urls
+  std::shared_ptr<Handler> options_handler_ptr_; //!< Pointer to OPTIONS request handler
 };
 
 } // namespace processing
