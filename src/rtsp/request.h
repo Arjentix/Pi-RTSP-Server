@@ -58,6 +58,14 @@ enum class Method {
   kTeardown
 };
 
+/**
+ * @brief Converts method to string
+ *
+ * @param method Method to be converted
+ * @return str with method name
+ */
+std::string MethodToString(Method method);
+
 
 /**
  * @brief Specific hasher for header names to provide case-insensitivity

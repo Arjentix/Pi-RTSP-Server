@@ -45,53 +45,6 @@ void TransformToLowerCase(std::string &str) {
 }
 
 /**
- * @brief Converts method to string
- *
- * @param method Method to be converted
- * @return str with method name
- */
-std::string MethodToString(rtsp::Method method) {
-  std::string method_str;
-
-  switch (method) {
-    case rtsp::Method::kDescribe:
-      method_str = "DESCRIBE";
-      break;
-    case rtsp::Method::kAnnounce:
-      method_str = "ANNOUNCE";
-      break;
-    case rtsp::Method::kGetParameter:
-      method_str = "GET_PARAMETER";
-      break;
-    case rtsp::Method::kOptions:
-      method_str = "OPTIONS";
-      break;
-    case rtsp::Method::kPause:
-      method_str = "PAUSE";
-      break;
-    case rtsp::Method::kPlay:
-      method_str = "PLAY";
-      break;
-    case rtsp::Method::kRecord:
-      method_str = "RECORD";
-      break;
-    case rtsp::Method::kSetup:
-      method_str = "SETUP";
-      break;
-    case rtsp::Method::kSetParameter:
-      method_str = "SET_PARAMETER";
-      break;
-    case rtsp::Method::kTeardown:
-      method_str = "TEARDOWN";
-      break;
-    default:
-      method_str = "UNKNOWN METHOD";
-  }
-
-  return method_str;
-}
-
-/**
  * @brief Parse RTSP method from string
  * @throws rtsp::ParseError exception if can't recognize RTSP method
  *
@@ -207,6 +160,48 @@ namespace rtsp {
 
 ParseError::ParseError(std::string_view message) :
 std::runtime_error(message.data()) {}
+
+
+std::string MethodToString(Method method) {
+  std::string method_str;
+
+  switch (method) {
+    case Method::kDescribe:
+      method_str = "DESCRIBE";
+      break;
+    case Method::kAnnounce:
+      method_str = "ANNOUNCE";
+      break;
+    case Method::kGetParameter:
+      method_str = "GET_PARAMETER";
+      break;
+    case Method::kOptions:
+      method_str = "OPTIONS";
+      break;
+    case Method::kPause:
+      method_str = "PAUSE";
+      break;
+    case Method::kPlay:
+      method_str = "PLAY";
+      break;
+    case Method::kRecord:
+      method_str = "RECORD";
+      break;
+    case Method::kSetup:
+      method_str = "SETUP";
+      break;
+    case Method::kSetParameter:
+      method_str = "SET_PARAMETER";
+      break;
+    case Method::kTeardown:
+      method_str = "TEARDOWN";
+      break;
+    default:
+      method_str = "UNKNOWN METHOD";
+  }
+
+  return method_str;
+}
 
 
 std::size_t HeaderNameHash::operator()(std::string header_name) const {
