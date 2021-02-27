@@ -29,6 +29,7 @@ SOFTWARE.
 #include <utility>
 #include <algorithm>
 #include <sstream>
+#include <iomanip>
 
 namespace {
 
@@ -41,6 +42,53 @@ void TransformToLowerCase(std::string &str) {
   std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) {
     return std::tolower(c);
   });
+}
+
+/**
+ * @brief Converts method to string
+ *
+ * @param method Method to be converted
+ * @return str with method name
+ */
+std::string MethodToString(rtsp::Method method) {
+  std::string method_str;
+
+  switch (method) {
+    case rtsp::Method::kDescribe:
+      method_str = "DESCRIBE";
+      break;
+    case rtsp::Method::kAnnounce:
+      method_str = "ANNOUNCE";
+      break;
+    case rtsp::Method::kGetParameter:
+      method_str = "GET_PARAMETER";
+      break;
+    case rtsp::Method::kOptions:
+      method_str = "OPTIONS";
+      break;
+    case rtsp::Method::kPause:
+      method_str = "PAUSE";
+      break;
+    case rtsp::Method::kPlay:
+      method_str = "PLAY";
+      break;
+    case rtsp::Method::kRecord:
+      method_str = "RECORD";
+      break;
+    case rtsp::Method::kSetup:
+      method_str = "SETUP";
+      break;
+    case rtsp::Method::kSetParameter:
+      method_str = "SET_PARAMETER";
+      break;
+    case rtsp::Method::kTeardown:
+      method_str = "TEARDOWN";
+      break;
+    default:
+      method_str = "UNKNOWN METHOD";
+  }
+
+  return method_str;
 }
 
 /**
@@ -115,6 +163,7 @@ rtsp::Request ParseRequest(std::string &&request_str) {
 
   iss >> request.url;
 
+  iss.ignore(1);
   std::string protocol;
   std::getline(iss, protocol, '/');
   if (protocol != "RTSP") {
@@ -123,6 +172,7 @@ rtsp::Request ParseRequest(std::string &&request_str) {
 
   iss >> request.version;
 
+  iss.ignore(2, '\n');
   std::string line;
   while (std::getline(iss, line) && line != "\r") {
     request.headers.insert(ParseHeader(std::move(line)));
@@ -167,7 +217,24 @@ std::size_t HeaderNameHash::operator()(std::string header_name) const {
 bool HeaderNameEqual::operator()(std::string lhs, std::string rhs) const {
   TransformToLowerCase(lhs);
   TransformToLowerCase(rhs);
-  return std::equal_to<std::string>()(lhs, rhs);
+  return (lhs == rhs);
+}
+
+std::ostream &operator<<(std::ostream &os, const Request::Headers &headers) {
+  for (const auto &[key, value] : headers) {
+    os << key << ": " << value << "\r\n";
+  }
+
+  return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const Request &request) {
+  os << MethodToString(request.method) << " " << request.url << " RTSP/"
+     << std::fixed << std::setprecision(1) << request.version << "\r\n"
+     << request.headers << "\r\n\r\n"
+     << request.body;
+
+  return os;
 }
 
 sock::Socket &operator>>(sock::Socket &socket, Request &request) {

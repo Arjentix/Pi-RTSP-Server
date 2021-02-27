@@ -27,6 +27,7 @@ SOFTWARE.
 #include <string>
 #include <unordered_map>
 #include <stdexcept>
+#include <ostream>
 
 #include "sock/socket.h"
 
@@ -86,6 +87,10 @@ struct Request {
   Headers headers;
   std::string body;
 };
+
+std::ostream &operator<<(std::ostream &os, const Request::Headers &headers);
+
+std::ostream &operator<<(std::ostream &os, const Request &request);
 
 sock::Socket &operator>>(sock::Socket &socket, Request &request);
 

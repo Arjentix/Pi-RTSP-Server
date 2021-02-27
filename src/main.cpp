@@ -62,8 +62,10 @@ int main(int /*argc*/, char **/*argv*/) {
 
         rtsp::Request request;
         socket >> request;
+        std::cout << "Request:\n" << request << std::endl;
         rtsp::Response response = dispatcher.Dispatch(request);
         socket << response << std::endl;
+        std::cout << "\nResponse:\n" << response << std::endl;
       }
     }
   } catch (const std::exception &ex) {

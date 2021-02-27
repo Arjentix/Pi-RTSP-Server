@@ -28,13 +28,15 @@ SOFTWARE.
 #include <unordered_map>
 #include <ostream>
 
+#include "request.h"
+
 namespace rtsp {
 
 /**
  * @brief Response from Server to Client
  */
 struct Response {
-  using Headers = std::unordered_map<std::string, std::string>;
+  using Headers = Request::Headers;
 
   Response(int code, std::string description,
            Headers headers = Headers(), std::string body = "");
