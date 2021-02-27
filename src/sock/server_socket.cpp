@@ -27,7 +27,9 @@ SOFTWARE.
 #include <cstring>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
 
 #include "exception.h"
 
@@ -35,29 +37,47 @@ namespace sock {
 
 ServerSocket::ServerSocket(Type type, int port_number):
 Socket(type) {
+  if (fcntl(descriptor_, F_SETFL, fcntl(descriptor_, F_GETFL, 0) | O_NONBLOCK) < 0) {
+    throw ServerSocketException("Can't set non blocking option for socket");
+  }
+
   sockaddr_in server_addr;
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = htons(INADDR_ANY);
   server_addr.sin_port = htons(port_number);
 
+  int opt = 1;
+  setsockopt(descriptor_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
   if (bind(descriptor_, reinterpret_cast<sockaddr *>(&server_addr), sizeof(server_addr)) < 0) {
-    throw BindError(strerror(errno));
+    throw BindError(std::string("Can't bind socket: ") + strerror(errno));
   }
 
   if (listen(descriptor_, 1) < 0) {
-    throw ListenError(strerror(errno));
+    throw ListenError(std::string("Listen: ") + strerror(errno));
   }
 }
 
-std::pair<Socket, std::string> ServerSocket::Accept() const {
-  sockaddr_in client_addr;
-  socklen_t size = sizeof(client_addr);
-  int client_descriptor = accept(descriptor_, reinterpret_cast<sockaddr *>(&client_addr), &size);
-  if (client_descriptor < 0) {
-    throw AcceptError(strerror(errno));
+std::optional<Socket> ServerSocket::TryAccept(int sec) const {
+  fd_set inputs;
+  struct timeval timeout;
+  FD_ZERO(&inputs);
+  FD_SET(descriptor_, &inputs);
+
+  timeout.tv_sec = sec;
+  timeout.tv_usec = 0;
+
+  int select_res = select(FD_SETSIZE, &inputs, NULL, NULL, &timeout);
+  if (select_res <= 0) {
+    return std::nullopt;
   }
 
-  return {Socket(client_descriptor), inet_ntoa(client_addr.sin_addr)};
+  int client_descriptor = accept(descriptor_, NULL, NULL);
+  if (client_descriptor < 0) {
+    throw AcceptError(std::string("Can't accept client: ") + strerror(errno));
+  }
+
+  return Socket(client_descriptor);
 }
 
 } // namespace sock

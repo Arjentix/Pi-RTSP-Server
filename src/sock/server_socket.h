@@ -25,6 +25,7 @@ SOFTWARE.
 #pragma once
 
 #include <utility>
+#include <optional>
 
 #include "socket.h"
 
@@ -45,11 +46,12 @@ class ServerSocket : public Socket {
   ServerSocket(Type type, int port_number);
 
   /**
-   * @brief Accept client connection
+   * @brief Try to accept client for sec seconds
    *
-   * @return New socket, associated with client, and its ip address
+   * @param sec Number of seconds to wait client connection
+   * @return Socket associated with client, if client has connected in sec seconds
    */
-  std::pair<Socket, std::string> Accept() const;
+  std::optional<Socket> TryAccept(int sec) const;
 };
 
 } // namespace sock

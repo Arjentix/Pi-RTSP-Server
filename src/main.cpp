@@ -46,20 +46,25 @@ processing::RequestDispatcher BuildRequestDispatcher() {
 
 int main(int /*argc*/, char **/*argv*/) {
   try {
+    constexpr int kRtspPortNumber = 5544;
+    constexpr int kAcceptTimeout = 2;
+
     signal(SIGINT, SignalHandler);
 
     processing::RequestDispatcher dispatcher = BuildRequestDispatcher();
 
-    constexpr int kRtspPortNumber = 554;
-
     sock::ServerSocket server_socket(sock::Type::kTcp, kRtspPortNumber);
     std::cout << "Server started" << std::endl;
     while (!stop_flag) {
-      sock::Socket socket = server_socket.Accept().first;
-      rtsp::Request request;
-      socket >> request;
-      rtsp::Response response = dispatcher.Dispatch(request);
-      socket << response << std::endl;
+      std::optional<sock::Socket> socket_opt = server_socket.TryAccept(kAcceptTimeout);
+      if (socket_opt.has_value()) {
+        sock::Socket socket = std::move(socket_opt.value());
+
+        rtsp::Request request;
+        socket >> request;
+        rtsp::Response response = dispatcher.Dispatch(request);
+        socket << response << std::endl;
+      }
     }
   } catch (const std::exception &ex) {
     std::cerr << "Error: " << ex.what() << std::endl;
