@@ -42,7 +42,7 @@ class Handler {
    * @param request An RTSP request to be handled
    * @return RTSP response
    */
-  virtual rtsp::Response handle(const rtsp::Request &request) = 0;
+  virtual rtsp::Response Handle(const rtsp::Request &request) = 0;
 };
 
 } // namespace processing

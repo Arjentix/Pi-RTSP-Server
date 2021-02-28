@@ -46,7 +46,7 @@ class Options : public Handler {
    */
   Options(const Methods &acceptable_methods);
 
-  virtual rtsp::Response handle(const rtsp::Request &request) override;
+  virtual rtsp::Response Handle(const rtsp::Request &request) override;
 
  private:
   const Methods &acceptable_methods_;

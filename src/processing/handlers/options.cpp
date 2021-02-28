@@ -51,7 +51,7 @@ namespace processing::handlers {
 Options::Options(const Methods &acceptable_methods) :
 acceptable_methods_(acceptable_methods) {}
 
-rtsp::Response Options::handle(const rtsp::Request &) {
+rtsp::Response Options::Handle(const rtsp::Request &) {
   return {200, "OK",
     {
       {"Public", MethodsToString(acceptable_methods_)}

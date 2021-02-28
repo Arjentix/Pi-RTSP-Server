@@ -91,10 +91,10 @@ rtsp::Response RequestDispatcher::Dispatch(const rtsp::Request &request) {
     rtsp::Response::Headers old_response_headers = response.headers;
 
     if (request.method == rtsp::Method::kOptions) {
-      response = options_handler_ptr_->handle(request);
+      response = options_handler_ptr_->Handle(request);
     } else {
       RequestParams params = {request.method, request.url};
-      response = params_to_handler_.at(std::move(params))->handle(request);
+      response = params_to_handler_.at(std::move(params))->Handle(request);
     }
 
     response.headers.merge(std::move(old_response_headers));
