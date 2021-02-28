@@ -59,11 +59,18 @@ int main(int /*argc*/, char **/*argv*/) {
       std::optional<sock::Socket> socket_opt = server_socket.TryAccept(kAcceptTimeout);
       if (socket_opt.has_value()) {
         sock::Socket socket = std::move(socket_opt.value());
+        rtsp::Response response;
 
-        rtsp::Request request;
-        socket >> request;
-        std::cout << "Request:\n" << request << std::endl;
-        rtsp::Response response = dispatcher.Dispatch(request);
+        try {
+          rtsp::Request request;
+          socket >> request;
+          std::cout << "Request:\n" << request << std::endl;
+          response = dispatcher.Dispatch(request);
+        } catch (const rtsp::ParseError &ex) {
+          std::cout << "Can't parse request: " << ex.what() << std::endl;
+          response = {400, "Bad Request"};
+        }
+
         socket << response << std::endl;
         std::cout << "\nResponse:\n" << response << std::endl;
       }
