@@ -29,6 +29,13 @@ SOFTWARE.
 
 namespace rtsp {
 
+Response::Response() :
+version(1.0),
+code(0),
+description(""),
+headers(),
+body("") {}
+
 Response::Response(int code, std::string description,
                    Headers headers, std::string body) :
 version(1.0),

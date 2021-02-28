@@ -38,6 +38,8 @@ namespace rtsp {
 struct Response {
   using Headers = Request::Headers;
 
+  Response();
+
   Response(int code, std::string description,
            Headers headers = Headers(), std::string body = "");
 
