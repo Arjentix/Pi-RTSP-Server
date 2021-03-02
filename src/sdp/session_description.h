@@ -28,6 +28,7 @@ SOFTWARE.
 #include <utility>
 #include <vector>
 #include <ostream>
+#include <optional>
 
 namespace sdp {
 
@@ -36,7 +37,7 @@ namespace sdp {
  */
 struct TimeDescription {
   std::pair<int, int> active_time; //!< Mandatory. Time the session is active
-  int repeat; //!< Optional. Zero or more repeat times
+  std::optional<int> repeat; //!< Optional. Zero or more repeat times
 };
 
 std::ostream &operator<<(std::ostream &os, const TimeDescription &time_description);

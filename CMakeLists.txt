@@ -9,6 +9,7 @@ set(SOURCES
     ${SRC_DIR}/main.cpp
     ${SRC_DIR}/rtsp/request.cpp
     ${SRC_DIR}/rtsp/response.cpp
+    ${SRC_DIR}/sdp/session_description.cpp
     ${SRC_DIR}/sock/exception.cpp
     ${SRC_DIR}/sock/socket.cpp
     ${SRC_DIR}/sock/server_socket.cpp
