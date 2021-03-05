@@ -7,6 +7,8 @@ set(BUILD_FLAGS "-Wall -Wextra -pedantic")
 
 set(SOURCES
     ${SRC_DIR}/main.cpp
+    ${SRC_DIR}/camera.cpp
+    ${SRC_DIR}/exception/camera_opening_error.cpp
     ${SRC_DIR}/rtsp/request.cpp
     ${SRC_DIR}/rtsp/response.cpp
     ${SRC_DIR}/sdp/session_description.cpp
@@ -15,6 +17,7 @@ set(SOURCES
     ${SRC_DIR}/sock/server_socket.cpp
     ${SRC_DIR}/processing/request_dispatcher.cpp
     ${SRC_DIR}/processing/handlers/options.cpp
+    ${SRC_DIR}/processing/handlers/describe.cpp
 )
 
 # Disabling OpenCv searching for raspicam build

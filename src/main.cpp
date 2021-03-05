@@ -27,8 +27,10 @@ SOFTWARE.
 
 #include <iostream>
 
-#include "processing/request_dispatcher.h"
+#include "camera.h"
 #include "sock/server_socket.h"
+#include "processing/request_dispatcher.h"
+#include "processing/handlers/describe.h"
 
 namespace {
 
@@ -39,7 +41,14 @@ void SignalHandler(int) {
 }
 
 processing::RequestDispatcher BuildRequestDispatcher() {
-  return processing::RequestDispatcher();
+  processing::RequestDispatcher request_dispatcher;
+
+  request_dispatcher.RegisterHandler(
+    {rtsp::Method::kDescribe, "rtsp://127.0.0.1:5544/jpeg"},
+    std::make_shared<processing::handlers::Describe>()
+  );
+
+  return request_dispatcher;
 }
 
 } // namespace
@@ -50,6 +59,8 @@ int main(int /*argc*/, char **/*argv*/) {
     constexpr int kAcceptTimeout = 2;
 
     signal(SIGINT, SignalHandler);
+
+    Camera::GetInstance(); // Initializing camera
 
     processing::RequestDispatcher dispatcher = BuildRequestDispatcher();
 
