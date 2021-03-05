@@ -26,7 +26,7 @@ SOFTWARE.
 
 #include <unistd.h>
 
-#include "exceptions/camera_opening_error.h"
+#include "exception/camera_opening_error.h"
 
 namespace {
 
@@ -38,6 +38,7 @@ raspicam::RaspiCam OpenCamera() {
   }
 
   sleep(3);
+  return camera;
 }
 
 } // namespace
