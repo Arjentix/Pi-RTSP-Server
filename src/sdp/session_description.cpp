@@ -70,6 +70,20 @@ void CheckAndWrite(std::ostream &os, char key, const std::vector<std::string> &v
 
 namespace sdp {
 
+template<typename T>
+std::ostream &operator<<(std::ostream &os, const std::vector<T> &v) {
+  for (const auto &value : v) {
+    os << value;
+  }
+
+  return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const Attribute &attribute) {
+  os << "a=" << attribute.first << ":" << attribute.second << kCrLf;
+  return os;
+}
+
 std::ostream &operator<<(std::ostream &os, const TimeDescription &time_description) {
   os << "t=" << time_description.active_time.first << " "
      << time_description.active_time.second << kCrLf;
@@ -88,7 +102,7 @@ std::ostream &operator<<(std::ostream &os, const MediaDescription &media_descrip
   CheckAndWrite(os, 'c', media_description.connection);
   CheckAndWrite(os, 'b', media_description.bandwidths);
   CheckAndWrite(os, 'k', media_description.key);
-  CheckAndWrite(os, 'a', media_description.attributes);
+  os << media_description.attributes;
 
   return os;
 }
@@ -104,18 +118,11 @@ std::ostream &operator<<(std::ostream &os, const SessionDescription &session_des
   CheckAndWrite(os, 'p', session_description.phones);
   CheckAndWrite(os, 'c', session_description.connection);
   CheckAndWrite(os, 'b', session_description.bandwidths);
-
-  for (const TimeDescription &time_description : session_description.time_descriptions) {
-    os << time_description;
-  }
-
+  os << session_description.time_descriptions;
   CheckAndWrite(os, 'z', session_description.time_zone);
   CheckAndWrite(os, 'k', session_description.key);
-  CheckAndWrite(os, 'a', session_description.attributes);
-
-  for (const MediaDescription &media_description : session_description.media_descriptions) {
-    os << media_description;
-  }
+  os << session_description.attributes;
+  os << session_description.media_descriptions;
 
   return os;
 }

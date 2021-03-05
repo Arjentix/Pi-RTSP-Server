@@ -33,10 +33,17 @@ SOFTWARE.
 namespace sdp {
 
 /**
+ * @brief SDP attribute
+ */
+using Attribute = std::pair<std::string, std::string>;
+
+std::ostream &operator<<(std::ostream &os, const Attribute &attribute);
+
+/**
  * @brief Struct with Time Description of SDP format
  */
 struct TimeDescription {
-  std::pair<int, int> active_time; //!< Mandatory. Time the session is active
+  std::pair<uint64_t , uint64_t> active_time; //!< Mandatory. Time the session is active
   std::optional<int> repeat; //!< Optional. Zero or more repeat times
 };
 
@@ -54,7 +61,7 @@ struct MediaDescription {
   std::string connection; //!< Connection information — optional if included at session level
   std::vector<std::string> bandwidths; //!< Zero or more bandwidth information lines
   std::string key; //!< Encryption key
-  std::vector<std::string> attributes; //!< Zero or more media attribute lines — overriding the Session attribute lines
+  std::vector<Attribute> attributes; //!< Zero or more media attribute lines — overriding the Session attribute lines
 };
 
 std::ostream &operator<<(std::ostream &os, const MediaDescription &media_description);
@@ -79,7 +86,7 @@ struct SessionDescription {
   std::vector<std::string> bandwidths; //!< Zero or more bandwidth information lines
   std::string time_zone; //!< Time zone adjustments
   std::string key; //!< Encryption key
-  std::vector<std::string> attributes; //!< Zero or more session attribute lines
+  std::vector<Attribute> attributes; //!< Zero or more session attribute lines
   std::vector<MediaDescription> media_descriptions; //!< Zero or more Media descriptions
 };
 
