@@ -28,6 +28,6 @@ SOFTWARE.
 #include <string_view>
 
 class CameraOpeningError : public std::runtime_error {
-public:
+ public:
     CameraOpeningError(std::string_view message);
 };
