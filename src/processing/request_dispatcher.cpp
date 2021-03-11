@@ -51,14 +51,14 @@ class BadUrl : public std::runtime_error {
  */
 std::string ExtractPath(const std::string &full_url) {
   const uint kGroupsNumber = 7;
-  const std::string scheme = R"(^(\S+))";
+  const std::string scheme = R"(^(\S+)://)";
   const std::string login = R"(([^:\s]+)?)";
   const std::string password = R"((\S+))";
   const std::string login_password = R"((?:)" + login + R"((?::)" + password + R"()?@)?)";
   const std::string hostname = R"(([^:]+))";
-  const std::string port = R"(([0-9]+))";
+  const std::string port = R"((?::([0-9]+))?)";
   const std::string path = R"(((?:/[^/\s]+)+))";
-  const std::regex reg_expr(scheme + R"(://)" + login_password + hostname + R"(:)" + port + path);
+  const std::regex reg_expr(scheme + login_password + hostname + port + path);
   std::smatch matches;
 
   if (!std::regex_search(full_url, matches, reg_expr) ||
