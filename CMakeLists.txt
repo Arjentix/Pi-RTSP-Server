@@ -18,6 +18,7 @@ set(SOURCES
     ${SRC_DIR}/processing/request_dispatcher.cpp
     ${SRC_DIR}/processing/handlers/options.cpp
     ${SRC_DIR}/processing/handlers/describe.cpp
+    ${SRC_DIR}/processing/handlers/setup.cpp
 )
 
 # Disabling OpenCv searching for raspicam build

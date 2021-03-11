@@ -31,6 +31,7 @@ SOFTWARE.
 #include "sock/server_socket.h"
 #include "processing/request_dispatcher.h"
 #include "processing/handlers/describe.h"
+#include "processing/handlers/setup.h"
 
 namespace {
 
@@ -46,6 +47,10 @@ processing::RequestDispatcher BuildRequestDispatcher() {
   request_dispatcher.RegisterHandler(
     {rtsp::Method::kDescribe, "/jpeg"},
     std::make_shared<processing::handlers::Describe>()
+  )
+  .RegisterHandler(
+     {rtsp::Method::kSetup, "/jpeg/track1"},
+    std::make_shared<processing::handlers::Setup>()
   );
 
   return request_dispatcher;
