@@ -44,7 +44,7 @@ processing::RequestDispatcher BuildRequestDispatcher() {
   processing::RequestDispatcher request_dispatcher;
 
   request_dispatcher.RegisterHandler(
-    {rtsp::Method::kDescribe, "rtsp://127.0.0.1:5544/jpeg"},
+    {rtsp::Method::kDescribe, "/jpeg"},
     std::make_shared<processing::handlers::Describe>()
   );
 
