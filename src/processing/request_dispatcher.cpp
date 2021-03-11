@@ -101,13 +101,15 @@ acceptable_urls_() {
                   options_handler_ptr_);
 }
 
-void RequestDispatcher::RegisterHandler(const RequestParams &params,
+RequestDispatcher &RequestDispatcher::RegisterHandler(const RequestParams &params,
                                         std::shared_ptr<Handler> handler_ptr) {
   auto res = params_to_handler_.insert({params, handler_ptr});
   acceptable_methods_.insert(params.method);
   if (res.second) {
     acceptable_urls_.insert(res.first->first.url);
   }
+
+  return *this;
 }
 
 rtsp::Response RequestDispatcher::Dispatch(const rtsp::Request &request) {

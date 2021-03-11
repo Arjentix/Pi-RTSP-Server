@@ -63,9 +63,10 @@ class RequestDispatcher {
    *
    * @param params Unique request parameters
    * @param handler_ptr Pointer to the Handler inheritor
+   * @return Reference to this for chaining
    */
-  void RegisterHandler(const RequestParams &params,
-                       std::shared_ptr<Handler> handler_ptr);
+  RequestDispatcher &RegisterHandler(const RequestParams &params,
+                                     std::shared_ptr<Handler> handler_ptr);
 
   /**
    * @brief Dispatch request to the specified handler and get a response
