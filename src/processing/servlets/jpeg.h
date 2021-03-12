@@ -24,20 +24,25 @@ SOFTWARE.
 
 #pragma once
 
-#include "processing/handler.h"
+#include "processing/servlet.h"
 
-namespace processing::handlers {
+#include <utility>
 
-/**
- * @brief SETUP request handler. Only one session is possible
- */
-class Setup : public Handler {
+namespace processing::servlets {
+
+class Jpeg : public Servlet {
  public:
-  virtual rtsp::Response Handle(const rtsp::Request &request) override;
+  Jpeg();
+
+  rtsp::Response ServeDescribe(const rtsp::Request &request) override;
+
+  rtsp::Response ServeSetup(const rtsp::Request &request) override;
 
  private:
   const int kSessionId = 1;
   const int kServerPort = 1234;
+  const std::string kVideoTrackName = "track1";
+  std::pair<int, int> client_ports_;
 };
 
-} // namespace processing::handlers
+} // namespace processing::servlets

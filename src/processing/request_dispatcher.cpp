@@ -32,6 +32,8 @@ SOFTWARE.
 
 namespace {
 
+using ServletMethod = rtsp::Response (processing::Servlet::*)(const rtsp::Request &);
+
 const char kCSeq[] = "CSeq";
 
 /**
@@ -74,45 +76,81 @@ std::string ExtractPath(const std::string &full_url) {
   return path_value;
 }
 
+ServletMethod ChooseServletMethod(rtsp::Method rtsp_method) {
+  ServletMethod servlet_method = nullptr;
+
+  switch (rtsp_method) {
+    case rtsp::Method::kDescribe:
+      servlet_method = &processing::Servlet::ServeDescribe;
+      break;
+    case rtsp::Method::kAnnounce:
+      servlet_method = &processing::Servlet::ServeAnnounce;
+      break;
+    case rtsp::Method::kGetParameter:
+      servlet_method = &processing::Servlet::ServeGetParameter;
+      break;
+    case rtsp::Method::kPause:
+      servlet_method = &processing::Servlet::ServePause;
+      break;
+    case rtsp::Method::kPlay:
+      servlet_method = &processing::Servlet::ServePlay;
+      break;
+    case rtsp::Method::kRecord:
+      servlet_method = &processing::Servlet::ServeRecord;
+      break;
+    case rtsp::Method::kSetup:
+      servlet_method = &processing::Servlet::ServeSetup;
+      break;
+    case rtsp::Method::kSetParameter:
+      servlet_method = &processing::Servlet::ServeSetParameter;
+      break;
+    case rtsp::Method::kTeardown:
+      servlet_method = &processing::Servlet::ServeTeardown;
+      break;
+    default:
+      throw std::out_of_range("Unknown method");
+  }
+
+  return servlet_method;
+}
+
+std::string MethodsToString(const processing::handlers::Options::Methods &methods) {
+  std::ostringstream oss;
+
+  bool first = true;
+  for (rtsp::Method method : methods) {
+    if (!first) {
+      oss << ", ";
+    }
+    oss << rtsp::MethodToString(method);
+
+    first = false;
+  }
+
+  return oss.str();
+}
+
 } // namespace
 
 namespace processing {
 
-bool operator==(const RequestParams &lhs, const RequestParams &rhs) {
-  return (lhs.method == rhs.method) && (lhs.url == rhs.url);
-}
-
-std::size_t RequestParamsHash::operator()(const RequestParams &params) const {
-  const std::size_t a = std::hash<int>()(static_cast<int>(params.method));
-  const std::size_t b = std::hash<std::string>()(params.url);
-  const std::size_t x = 31;
-
-  return a*x + b;
-}
-
-
 RequestDispatcher::RequestDispatcher() :
-params_to_handler_(),
-acceptable_methods_(),
-acceptable_urls_() {
-  options_handler_ptr_ =
-      std::make_shared<processing::handlers::Options>(acceptable_methods_);
-  RegisterHandler({rtsp::Method::kOptions, "*"},
-                  options_handler_ptr_);
-}
+url_to_servlet_(),
+acceptable_methods_({rtsp::Method::kOptions}),
+acceptable_urls_() {}
 
-RequestDispatcher &RequestDispatcher::RegisterHandler(const RequestParams &params,
-                                        std::shared_ptr<Handler> handler_ptr) {
-  auto res = params_to_handler_.insert({params, handler_ptr});
-  acceptable_methods_.insert(params.method);
+RequestDispatcher &RequestDispatcher::RegisterServlet(
+  const std::string &url, std::shared_ptr<Servlet> servlet_ptr) {
+  auto res = url_to_servlet_.insert({std::move(url), servlet_ptr});
   if (res.second) {
-    acceptable_urls_.insert(res.first->first.url);
+    acceptable_urls_.insert(res.first->first);
+    acceptable_methods_.merge(servlet_ptr->GetAcceptableMethods());
   }
 
   return *this;
 }
 
-rtsp::Response RequestDispatcher::Dispatch(const rtsp::Request &request) {
+rtsp::Response RequestDispatcher::Dispatch(rtsp::Request request) {
   if (!request.headers.count(kCSeq)) {
     return {400, "Bad Request"};
   }
@@ -129,15 +167,22 @@ rtsp::Response RequestDispatcher::Dispatch(const rtsp::Request &request) {
     response.description = "RTSP Version not supported";
     return response;
   }
+  if (!acceptable_methods_.count(request.method)) {
+    response.code = 501;
+    response.description = "Not Implemented";
+    return response;
+  }
 
   try {
     rtsp::Response::Headers old_response_headers = response.headers;
 
     if (request.method == rtsp::Method::kOptions) {
-      response = options_handler_ptr_->Handle(request);
+      response = GetOptions();
     } else {
-      RequestParams params = {request.method, ExtractPath(request.url)};
-      response = params_to_handler_.at(std::move(params))->Handle(request);
+      ServletMethod method = ChooseServletMethod(request.method);
+      auto [path, servlet_ptr] = *ChooseServlet(request.url);
+      request.url = ExtractPath(request.url).substr(path.size());
+      response = (servlet_ptr.get()->*method)(request);
     }
 
     response.headers.merge(std::move(old_response_headers));
@@ -147,16 +192,8 @@ rtsp::Response RequestDispatcher::Dispatch(const rtsp::Request &request) {
     response.description = "Bad Request";
   }
   catch (const std::out_of_range &ex) {
-    if (!acceptable_methods_.count(request.method)) {
-      response.code = 501;
-      response.description = "Not Implemented";
-    } else if (!acceptable_urls_.count(request.url)){
       response.code = 404;
       response.description = "Not Found";
-    } else {
-      response.code = 405;
-      response.description = "Method Not Allowed";
-    }
   }
   catch (const std::runtime_error &ex) {
     response.code = 500;
@@ -164,6 +201,35 @@ rtsp::Response RequestDispatcher::Dispatch(const rtsp::Request &request) {
   }
 
   return response;
+}
+
+rtsp::Response RequestDispatcher::GetOptions() const {
+  return {200, "OK",
+    {
+      {"Public", MethodsToString(acceptable_methods_)}
+    }
+  };
+}
+
+RequestDispatcher::UrlToServletMap::const_iterator RequestDispatcher::ChooseServlet(
+  const std::string &url) const {
+  if (url_to_servlet_.size() == 0) {
+    throw std::out_of_range("There aren't any servlets at all");
+  }
+
+  const std::string path = ExtractPath(url);
+  auto it = url_to_servlet_.lower_bound(path);
+  if ((it != url_to_servlet_.end()) &&
+      (it->first == path)) {
+    return it;
+  }
+
+  --it;
+  if (path.find(it->first) == 0) {
+    return it;
+  }
+
+  throw std::out_of_range("Can't find suitable servlet");
 }
 
 } // namespace processing

@@ -26,28 +26,13 @@ SOFTWARE.
 
 #include <string>
 #include <string_view>
-#include <unordered_map>
+#include <map>
 #include <unordered_set>
 #include <memory>
 
-#include "handler.h"
+#include "servlet.h"
 
 namespace processing {
-
-/**
- * @brief Request parameters that distinguish requests from handlers point of view
- */
-struct RequestParams {
-  rtsp::Method method;
-  std::string url;
-};
-
-bool operator==(const RequestParams &lhs, const RequestParams &rhs);
-
-struct RequestParamsHash {
-  std::size_t operator()(const RequestParams &params) const;
-};
-
 
 /**
  * @brief RequestDispatcher allows to register handlers and then dispatch RTSP
@@ -58,32 +43,35 @@ class RequestDispatcher {
   RequestDispatcher();
 
   /**
-   * @brief Register new handler, that will process request with specified params
-   * @details OPTIONS handler is generating automatically, no need to register it
+   * @brief Register new servlet, that will process request on specified url
    *
-   * @param params Unique request parameters
-   * @param handler_ptr Pointer to the Handler inheritor
+   * @param url Unique url
+   * @param servlet_ptr Pointer to the Servlet inheritor
    * @return Reference to this for chaining
    */
-  RequestDispatcher &RegisterHandler(const RequestParams &params,
-                                     std::shared_ptr<Handler> handler_ptr);
+  RequestDispatcher &RegisterServlet(const std::string &url,
+                                     std::shared_ptr<Servlet> servlet_ptr);
 
   /**
-   * @brief Dispatch request to the specified handler and get a response
+   * @brief Dispatch request to the specified servlet and get a response
+   * @details Must specific servlet will be chosen according to the url
    *
    * @param request Request to dispatch
-   * @return Response from handler if handler was found
+   * @return Response from servlet if such was found
    * @return Response with error in other way
    */
-  rtsp::Response Dispatch(const rtsp::Request &request);
+  rtsp::Response Dispatch(rtsp::Request request);
 
  private:
-  //! Request params -> Handler inheritor
-  std::unordered_map<RequestParams, std::shared_ptr<Handler>,
-                     RequestParamsHash> params_to_handler_;
+  using UrlToServletMap = std::map<std::string, std::shared_ptr<Servlet>>;
+  //! Url -> Servlet inheritor
+  UrlToServletMap url_to_servlet_;
   std::unordered_set<rtsp::Method> acceptable_methods_; //!< All acceptable methods
   std::unordered_set<std::string_view> acceptable_urls_; //!< All acceptable urls
-  std::shared_ptr<Handler> options_handler_ptr_; //!< Pointer to OPTIONS request handler
+
+  rtsp::Response GetOptions() const;
+
+  UrlToServletMap::const_iterator ChooseServlet(const std::string &url) const;
 };
 
 } // namespace processing

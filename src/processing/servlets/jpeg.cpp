@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "describe.h"
+#include "jpeg.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -72,9 +72,10 @@ std::string GetIpAddr() {
  * @brief Build SDP video media description with jpeg-encoding
  *
  * @param ip_address IP address of this machine to not to call expensive GetIpAddr()
+ * @param track_name Name of the video tack
  * @return Video media description
  */
-sdp::MediaDescription BuildMediaDescription(const std::string &ip_address) {
+sdp::MediaDescription BuildMediaDescription(const std::string &ip_address, const std::string track_name) {
   const int kMediaFormatCode = 26; // Jpeg code
 
   sdp::MediaDescription media_descr;
@@ -82,15 +83,15 @@ sdp::MediaDescription BuildMediaDescription(const std::string &ip_address) {
   media_descr.name = "video 0 RTP/AVP "s + std::to_string(kMediaFormatCode);
   media_descr.connection = "IN IP4 "s + ip_address;
 
-  media_descr.attributes.push_back({"control", "track1"});
+  media_descr.attributes.push_back({"control", track_name});
 
   const uint height = Camera::GetInstance().getHeight();
   const uint width = Camera::GetInstance().getWidth();
   media_descr.attributes.push_back({"cliprect",
-    "0,0,"s + std::to_string(height) + "," + std::to_string(width)});
+                                    "0,0,"s + std::to_string(height) + "," + std::to_string(width)});
 
   media_descr.attributes.push_back({"framerate",
-    std::to_string(Camera::GetInstance().getFrameRate())});
+                                    std::to_string(Camera::GetInstance().getFrameRate())});
 
   return media_descr;
 }
@@ -98,9 +99,10 @@ sdp::MediaDescription BuildMediaDescription(const std::string &ip_address) {
 /**
  * @brief Build SDP session description, i.e. body of DESCRIBE rtsp response
  *
+ * @param track_name Name of the video tack
  * @return Session description
  */
-sdp::SessionDescription BuildSessionDescription() {
+sdp::SessionDescription BuildSessionDescription(const std::string track_name) {
   const auto now = std::chrono::system_clock::now();
   const uint64_t kSessionId = std::chrono::duration_cast<std::chrono::seconds>(
       now.time_since_epoch()).count();
@@ -116,28 +118,94 @@ sdp::SessionDescription BuildSessionDescription() {
   descr.info = "jpeg";
   descr.time_descriptions.push_back(sdp::TimeDescription{{0, 0}, std::nullopt});
 
-  sdp::MediaDescription media_descr = BuildMediaDescription(kIp);
+  sdp::MediaDescription media_descr = BuildMediaDescription(kIp, track_name);
   descr.media_descriptions.push_back(std::move(media_descr));
 
   return descr;
 }
 
+/**
+ * @brief Extract client RTP and RTCP ports
+ *
+ * @param transport Value of Transport header
+ * @return pair of RTP and RTCP ports in success
+ * @return {0, 0} in other way
+ */
+std::pair<int, int> ExtractClientPorts(const std::string &transport) {
+  const std::string kClientPortStr = "client_port=";
+  std::istringstream iss(transport);
+  std::string param;
+
+  while (std::getline(iss, param, ';')) {
+    uint pos = param.find(kClientPortStr);
+    if (pos != param.npos) {
+      std::istringstream ports_iss(param.substr(pos + kClientPortStr.size()));
+      std::pair<int, int> ports;
+      ports_iss >> ports.first;
+      ports_iss.ignore(1);
+      ports_iss >> ports.second;
+
+      return ports;
+    }
+  }
+
+  return {0, 0};
+}
+
 } // namespace
 
-namespace processing::handlers {
+namespace processing::servlets {
 
-rtsp::Response Describe::Handle(const rtsp::Request &) {
+Jpeg::Jpeg():
+client_ports_(0, 0) {
+  AddMethod(rtsp::Method::kDescribe);
+  AddMethod(rtsp::Method::kSetup);
+}
+
+rtsp::Response Jpeg::ServeDescribe(const rtsp::Request &) {
   std::ostringstream oss;
-  oss << BuildSessionDescription();
+  oss << BuildSessionDescription(kVideoTrackName);
   std::string descr_str = oss.str();
 
   return {200, "OK",
-    {
-      {"Content-Type", "application/sdp"},
-      {"Content-Length", std::to_string(descr_str.length())}
-    },
-    std::move(descr_str)
+          {
+              {"Content-Type", "application/sdp"},
+              {"Content-Length", std::to_string(descr_str.length())}
+          },
+          std::move(descr_str)
   };
 }
 
-} // namespace processing::handlers
+rtsp::Response Jpeg::ServeSetup(const rtsp::Request &request) {
+  using namespace std::string_literals;
+
+  const char kSessionHeader[] = "Session";
+  const char kTransportHeader[] = "Transport";
+  rtsp::Response response;
+
+  if (request.url != "/"s + kVideoTrackName) {
+    response.code = 404;
+    response.description = "Not Found";
+    return response;
+  }
+
+  if (request.headers.count(kSessionHeader) &&
+      std::stoi(request.headers.at(kSessionHeader)) == kSessionId) {
+    response.code = 459;
+    response.description = "Aggregate Operation Not Allowed";
+    return response;
+  }
+
+  response.code = 200;
+  response.description = "OK";
+  response.headers[kSessionHeader] = std::to_string(kSessionId);
+  auto client_ports = ExtractClientPorts(request.headers.at(kTransportHeader));
+  response.headers[kTransportHeader] = "RTP/AVP;unicast;"s + "client_port=" +
+      std::to_string(client_ports.first) + "-" +
+      std::to_string(client_ports.second) + ";server_port=" +
+      std::to_string(kServerPort) + "-" + std::to_string(kServerPort + 1);
+
+  return response;
+}
+
+} // namespace processing::servlets

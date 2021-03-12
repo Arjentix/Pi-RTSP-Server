@@ -30,8 +30,7 @@ SOFTWARE.
 #include "camera.h"
 #include "sock/server_socket.h"
 #include "processing/request_dispatcher.h"
-#include "processing/handlers/describe.h"
-#include "processing/handlers/setup.h"
+#include "processing/servlets/jpeg.h"
 
 namespace {
 
@@ -44,13 +43,9 @@ void SignalHandler(int) {
 processing::RequestDispatcher BuildRequestDispatcher() {
   processing::RequestDispatcher request_dispatcher;
 
-  request_dispatcher.RegisterHandler(
-    {rtsp::Method::kDescribe, "/jpeg"},
-    std::make_shared<processing::handlers::Describe>()
-  )
-  .RegisterHandler(
-     {rtsp::Method::kSetup, "/jpeg/track1"},
-    std::make_shared<processing::handlers::Setup>()
+  request_dispatcher.RegisterServlet(
+    "/jpeg",
+    std::make_shared<processing::servlets::Jpeg>()
   );
 
   return request_dispatcher;
