@@ -224,9 +224,11 @@ RequestDispatcher::UrlToServletMap::const_iterator RequestDispatcher::ChooseServ
     return it;
   }
 
-  --it;
-  if (path.find(it->first) == 0) {
-    return it;
+  if (it != url_to_servlet_.begin()) {
+    --it;
+    if (path.find(it->first) == 0) {
+      return it;
+    }
   }
 
   throw std::out_of_range("Can't find suitable servlet");
