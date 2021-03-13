@@ -30,6 +30,7 @@ SOFTWARE.
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <iostream>
 #include <sstream>
 #include <chrono>
 
@@ -157,9 +158,24 @@ std::pair<int, int> ExtractClientPorts(const std::string &transport) {
 namespace processing::servlets {
 
 Jpeg::Jpeg():
-client_ports_(0, 0) {
+client_ports_(0, 0),
+play_queue_(),
+play_worker_(&Jpeg::PlayWorkerThread, this),
+play_worker_stop_(false),
+play_worker_mutex_(),
+play_worker_notifier_() {
   AddMethod(rtsp::Method::kDescribe);
   AddMethod(rtsp::Method::kSetup);
+  AddMethod(rtsp::Method::kPlay);
+}
+
+Jpeg::~Jpeg() {
+  {
+    std::lock_guard guard(play_worker_mutex_);
+    play_worker_stop_ = true;
+  }
+  play_worker_notifier_.notify_one();
+  play_worker_.join();
 }
 
 rtsp::Response Jpeg::ServeDescribe(const rtsp::Request &) {
@@ -168,11 +184,11 @@ rtsp::Response Jpeg::ServeDescribe(const rtsp::Request &) {
   std::string descr_str = oss.str();
 
   return {200, "OK",
-          {
-              {"Content-Type", "application/sdp"},
-              {"Content-Length", std::to_string(descr_str.length())}
-          },
-          std::move(descr_str)
+    {
+        {"Content-Type", "application/sdp"},
+        {"Content-Length", std::to_string(descr_str.length())}
+    },
+    std::move(descr_str)
   };
 }
 
@@ -199,13 +215,49 @@ rtsp::Response Jpeg::ServeSetup(const rtsp::Request &request) {
   response.code = 200;
   response.description = "OK";
   response.headers[kSessionHeader] = std::to_string(kSessionId);
-  auto client_ports = ExtractClientPorts(request.headers.at(kTransportHeader));
+  client_ports_ = ExtractClientPorts(request.headers.at(kTransportHeader));
   response.headers[kTransportHeader] = "RTP/AVP;unicast;"s + "client_port=" +
-      std::to_string(client_ports.first) + "-" +
-      std::to_string(client_ports.second) + ";server_port=" +
-      std::to_string(kServerPort) + "-" + std::to_string(kServerPort + 1);
+    std::to_string(client_ports_.first) + "-" +
+    std::to_string(client_ports_.second) + ";server_port=" +
+    std::to_string(kServerPorts.first) + "-" + std::to_string(kServerPorts.second);
 
   return response;
+}
+
+rtsp::Response Jpeg::ServePlay(const rtsp::Request &request) {
+  {
+    std::lock_guard guard(play_worker_mutex_);
+    play_queue_.push(request);
+  }
+  play_worker_notifier_.notify_one();
+
+  return {200, "OK",
+    {
+      {"Range", "0.000-"}
+    }
+  };
+}
+
+void Jpeg::PlayWorkerThread() {
+  for (;;) {
+    std::unique_lock lock(play_worker_mutex_);
+    play_worker_notifier_.wait(lock,
+      [&play_queue = play_queue_, &play_worker_stop = play_worker_stop_] {
+        return (!play_queue.empty() || play_worker_stop);
+      }
+    );
+
+    if (play_worker_stop_) {
+      return;
+    }
+
+    rtsp::Request play_request = play_queue_.front();
+    play_queue_.pop();
+    lock.unlock();
+
+    std::cout << "Processing PLAY request..." << std::endl;
+    // ...
+  }
 }
 
 } // namespace processing::servlets

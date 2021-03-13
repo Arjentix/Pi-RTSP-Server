@@ -26,7 +26,11 @@ SOFTWARE.
 
 #include "processing/servlet.h"
 
+#include <queue>
 #include <utility>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 namespace processing::servlets {
 
@@ -34,15 +38,31 @@ class Jpeg : public Servlet {
  public:
   Jpeg();
 
+  ~Jpeg();
+
   rtsp::Response ServeDescribe(const rtsp::Request &request) override;
 
   rtsp::Response ServeSetup(const rtsp::Request &request) override;
 
+  rtsp::Response ServePlay(const rtsp::Request &request) override;
+
  private:
-  const int kSessionId = 1;
-  const int kServerPort = 1234;
-  const std::string kVideoTrackName = "track1";
-  std::pair<int, int> client_ports_;
+  const int kSessionId = 1; //!< Session id. Only one session is supported
+  //! @TODO Server RTP and RTCP ports. Don't know for what
+  const std::pair<int, int> kServerPorts = {1234, 1235};
+  const std::string kVideoTrackName = "track1"; //!< Name of the video track
+
+  std::pair<int, int> client_ports_; //!< Pair of client RTP and RTCP ports
+  std::queue<rtsp::Request> play_queue_; //!< Queue of PLAY requests
+  std::thread play_worker_; //!< Thread for PLAY requests processing
+  bool play_worker_stop_; //!< True, if play_worker_ should stop
+  std::mutex play_worker_mutex_; //!< Mutex to interact with play_worker_
+  std::condition_variable play_worker_notifier_; //!< Cond. var. to interact with play_worker_
+
+  /**
+   * @brief Extract PLAY request from queue and process it. Used in play_worker_
+   */
+  void PlayWorkerThread();
 };
 
 } // namespace processing::servlets
