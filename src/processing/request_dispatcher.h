@@ -64,13 +64,25 @@ class RequestDispatcher {
 
  private:
   using UrlToServletMap = std::map<std::string, std::shared_ptr<Servlet>>;
+
   //! Url -> Servlet inheritor
   UrlToServletMap url_to_servlet_;
   std::unordered_set<rtsp::Method> acceptable_methods_; //!< All acceptable methods
   std::unordered_set<std::string_view> acceptable_urls_; //!< All acceptable urls
 
+  /**
+   * @brief Get response on OPTIONS request
+   *
+   * @return Response with acceptable methods
+   */
   rtsp::Response GetOptions() const;
 
+  /**
+   * @brief Choose proper Servlet to serve request on the given url
+   *
+   * @param url Request url
+   * @return Iterator, pointing on {Servlet url, Servlet} pair
+   */
   UrlToServletMap::const_iterator ChooseServlet(const std::string &url) const;
 };
 

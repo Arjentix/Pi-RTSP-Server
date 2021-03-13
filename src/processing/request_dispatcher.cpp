@@ -28,8 +28,6 @@ SOFTWARE.
 #include <regex>
 #include <iostream>
 
-#include "handlers/options.h"
-
 namespace {
 
 using ServletMethod = rtsp::Response (processing::Servlet::*)(const rtsp::Request &);
@@ -76,6 +74,12 @@ std::string ExtractPath(const std::string &full_url) {
   return path_value;
 }
 
+/**
+ * @brief Choose proper Servlet method to serve request according to the RTSP method
+ *
+ * @param rtsp_method Method from request
+ * @return Pointer to the Servlet method
+ */
 ServletMethod ChooseServletMethod(rtsp::Method rtsp_method) {
   ServletMethod servlet_method = nullptr;
 
@@ -114,7 +118,13 @@ ServletMethod ChooseServletMethod(rtsp::Method rtsp_method) {
   return servlet_method;
 }
 
-std::string MethodsToString(const processing::handlers::Options::Methods &methods) {
+/**
+ * @brief Put all methods in string spacing with coma
+ *
+ * @param methods Set of methods
+ * @return Methods in string presentation
+ */
+std::string MethodsToString(const std::unordered_set<rtsp::Method> &methods) {
   std::ostringstream oss;
 
   bool first = true;

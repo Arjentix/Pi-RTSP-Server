@@ -51,63 +51,63 @@ class Servlet {
    *
    * @return RTSP response to the request
    */
-  virtual rtsp::Response ServeDescribe(const rtsp::Request &);
+  virtual rtsp::Response ServeDescribe(const rtsp::Request &request);
 
   /**
    * @brief Serve ANNOUNCE RTSP request
    *
    * @return RTSP response to the request
    */
-  virtual rtsp::Response ServeAnnounce(const rtsp::Request &);
+  virtual rtsp::Response ServeAnnounce(const rtsp::Request &request);
 
   /**
    * @brief Serve GET_PARAMETER RTSP request
    *
    * @return RTSP response to the request
    */
-  virtual rtsp::Response ServeGetParameter(const rtsp::Request &);
+  virtual rtsp::Response ServeGetParameter(const rtsp::Request &request);
 
   /**
    * @brief Serve PAUSE RTSP request
    *
    * @return RTSP response to the request
    */
-  virtual rtsp::Response ServePause(const rtsp::Request &);
+  virtual rtsp::Response ServePause(const rtsp::Request &request);
 
   /**
    * @brief Serve PLAY RTSP request
    *
    * @return RTSP response to the request
    */
-  virtual rtsp::Response ServePlay(const rtsp::Request &);
+  virtual rtsp::Response ServePlay(const rtsp::Request &request);
 
   /**
    * @brief Serve RECORD RTSP request
    *
    * @return RTSP response to the request
    */
-  virtual rtsp::Response ServeRecord(const rtsp::Request &);
+  virtual rtsp::Response ServeRecord(const rtsp::Request &request);
 
   /**
    * @brief Serve SETUP RTSP request
    *
    * @return RTSP response to the request
    */
-  virtual rtsp::Response ServeSetup(const rtsp::Request &);
+  virtual rtsp::Response ServeSetup(const rtsp::Request &request);
 
   /**
    * @brief Serve SET_PARAMETER RTSP request
    *
    * @return RTSP response to the request
    */
-  virtual rtsp::Response ServeSetParameter(const rtsp::Request &);
+  virtual rtsp::Response ServeSetParameter(const rtsp::Request &request);
 
   /**
    * @brief Serve TEARDOWN RTSP request
    *
    * @return RTSP response to the request
    */
-  virtual rtsp::Response ServeTeardown(const rtsp::Request &);
+  virtual rtsp::Response ServeTeardown(const rtsp::Request &request);
 
  protected:
   /**
