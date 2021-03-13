@@ -46,12 +46,16 @@ class Jpeg : public Servlet {
 
   rtsp::Response ServePlay(const rtsp::Request &request) override;
 
+  rtsp::Response ServeTeardown(const rtsp::Request &request) override;
+
  private:
-  const int kSessionId = 1; //!< Session id. Only one session is supported
   //! @TODO Server RTP and RTCP ports. Don't know for what
   const std::pair<int, int> kServerPorts = {1234, 1235};
   const std::string kVideoTrackName = "track1"; //!< Name of the video track
 
+  bool client_connected_; //!< True, if one client is playing a video
+  bool teardown_; //!< True, if TEARDOWN was requested
+  uint32_t session_id_; //!< Session id. Only one session is supported
   std::pair<int, int> client_ports_; //!< Pair of client RTP and RTCP ports
   std::queue<rtsp::Request> play_queue_; //!< Queue of PLAY requests
   std::thread play_worker_; //!< Thread for PLAY requests processing
@@ -63,6 +67,16 @@ class Jpeg : public Servlet {
    * @brief Extract PLAY request from queue and process it. Used in play_worker_
    */
   void PlayWorkerThread();
+
+  /**
+   * @brief Check if provided session id is vallid
+   *
+   * @param request Request to check
+   *
+   * @return true If session id is valid
+   * @return false In other way
+   */
+  bool CheckSession(const rtsp::Request &request);
 };
 
 } // namespace processing::servlets

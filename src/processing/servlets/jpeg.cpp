@@ -33,6 +33,7 @@ SOFTWARE.
 #include <iostream>
 #include <sstream>
 #include <chrono>
+#include <random>
 
 #include "sdp/session_description.h"
 #include "camera.h"
@@ -158,6 +159,9 @@ std::pair<int, int> ExtractClientPorts(const std::string &transport) {
 namespace processing::servlets {
 
 Jpeg::Jpeg():
+client_connected_(false),
+teardown_(false),
+session_id_(0),
 client_ports_(0, 0),
 play_queue_(),
 play_worker_(&Jpeg::PlayWorkerThread, this),
@@ -167,6 +171,7 @@ play_worker_notifier_() {
   AddMethod(rtsp::Method::kDescribe);
   AddMethod(rtsp::Method::kSetup);
   AddMethod(rtsp::Method::kPlay);
+  AddMethod(rtsp::Method::kTeardown);
 }
 
 Jpeg::~Jpeg() {
@@ -200,21 +205,25 @@ rtsp::Response Jpeg::ServeSetup(const rtsp::Request &request) {
   rtsp::Response response;
 
   if (request.url != "/"s + kVideoTrackName) {
-    response.code = 404;
-    response.description = "Not Found";
-    return response;
+    return {404, "Not Found"};
   }
 
   if (request.headers.count(kSessionHeader) &&
-      std::stoi(request.headers.at(kSessionHeader)) == kSessionId) {
-    response.code = 459;
-    response.description = "Aggregate Operation Not Allowed";
-    return response;
+      std::stoul(request.headers.at(kSessionHeader)) == session_id_) {
+    return {459, "Aggregate Operation Not Allowed"};
   }
+
+  if (client_connected_) {
+    return {423, "Locked"};
+  }
+
+  std::random_device rd;
+  std::mt19937 mersenne(rd());
+  session_id_ = mersenne();
 
   response.code = 200;
   response.description = "OK";
-  response.headers[kSessionHeader] = std::to_string(kSessionId);
+  response.headers[kSessionHeader] = std::to_string(session_id_);
   client_ports_ = ExtractClientPorts(request.headers.at(kTransportHeader));
   response.headers[kTransportHeader] = "RTP/AVP;unicast;"s + "client_port=" +
     std::to_string(client_ports_.first) + "-" +
@@ -225,6 +234,11 @@ rtsp::Response Jpeg::ServeSetup(const rtsp::Request &request) {
 }
 
 rtsp::Response Jpeg::ServePlay(const rtsp::Request &request) {
+  if (!CheckSession(request)) {
+    return {454, "Session Not Found"};
+  }
+
+  client_connected_ = true;
   {
     std::lock_guard guard(play_worker_mutex_);
     play_queue_.push(request);
@@ -236,6 +250,20 @@ rtsp::Response Jpeg::ServePlay(const rtsp::Request &request) {
       {"Range", "0.000-"}
     }
   };
+}
+
+rtsp::Response Jpeg::ServeTeardown(const rtsp::Request &request) {
+  if (!CheckSession(request)) {
+    return {454, "Session Not Found"};
+  }
+
+  {
+    std::lock_guard guard(play_worker_mutex_);
+    teardown_ = true;
+  }
+  play_worker_notifier_.notify_one();
+
+  return {200, "OK"};
 }
 
 void Jpeg::PlayWorkerThread() {
@@ -258,6 +286,12 @@ void Jpeg::PlayWorkerThread() {
     std::cout << "Processing PLAY request..." << std::endl;
     // ...
   }
+}
+
+bool Jpeg::CheckSession(const rtsp::Request &request) {
+  const char kSessionHeader[] = "Session";
+  return (request.headers.count(kSessionHeader) &&
+          (std::stoul(request.headers.at(kSessionHeader)) == session_id_));
 }
 
 } // namespace processing::servlets
