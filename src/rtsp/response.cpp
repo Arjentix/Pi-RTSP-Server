@@ -47,7 +47,7 @@ body(std::move(body)) {}
 std::ostream &operator<<(std::ostream &os, const Response &response) {
   os << "RTSP/" << std::fixed << std::setprecision(1) << response.version << " "
      << response.code << " " << response.description << "\r\n"
-     << response.headers << "\r\n\r\n"
+     << response.headers << "\r\n"
      << response.body;
 
   return os;
