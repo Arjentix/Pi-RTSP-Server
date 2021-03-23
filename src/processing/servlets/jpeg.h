@@ -38,7 +38,7 @@ class Jpeg : public Servlet {
  public:
   Jpeg();
 
-  ~Jpeg();
+  ~Jpeg() override;
 
   rtsp::Response ServeDescribe(const rtsp::Request &request) override;
 
@@ -76,7 +76,7 @@ class Jpeg : public Servlet {
    * @return true If session id is valid
    * @return false In other way
    */
-  bool CheckSession(const rtsp::Request &request);
+  bool CheckSession(const rtsp::Request &request) const;
 };
 
 } // namespace processing::servlets
