@@ -26,9 +26,12 @@ SOFTWARE.
 #include <csignal>
 
 #include <iostream>
+#include <vector>
+#include <future>
 
 #include "camera.h"
 #include "sock/server_socket.h"
+#include "sock/exception.h"
 #include "processing/request_dispatcher.h"
 #include "processing/servlets/jpeg.h"
 
@@ -63,27 +66,41 @@ int main(int /*argc*/, char **/*argv*/) {
     Camera::GetInstance(); // Initializing camera
 
     processing::RequestDispatcher dispatcher = BuildRequestDispatcher();
+    std::vector<std::future<void>> futures;
 
     sock::ServerSocket server_socket(sock::Type::kTcp, kRtspPortNumber);
     std::cout << "Server started" << std::endl;
     while (!stop_flag) {
       std::optional<sock::Socket> socket_opt = server_socket.TryAccept(kAcceptTimeout);
       if (socket_opt.has_value()) {
-        sock::Socket socket = std::move(socket_opt.value());
-        rtsp::Response response;
+        std::cout << "Connected client on socket " << socket_opt.value().GetDescriptor() << std::endl;
+        std::shared_ptr<sock::Socket> client_socket_ptr = std::make_shared<sock::Socket>(std::move(socket_opt.value()));
+        futures.push_back(std::async([&dispatcher] (std::shared_ptr<sock::Socket> socket_ptr) {
+          try {
+            bool close_connection = false;
+            while (!close_connection) {
+              rtsp::Response response;
+              rtsp::Request request;
 
-        try {
-          rtsp::Request request;
-          socket >> request;
-          std::cout << "Request:\n" << request << std::endl;
-          response = dispatcher.Dispatch(request);
-        } catch (const rtsp::ParseError &ex) {
-          std::cout << "Can't parse request: " << ex.what() << std::endl;
-          response = {400, "Bad Request"};
-        }
+              try {
+                *socket_ptr >> request;
+                std::cout << "Request:\n" << request << std::endl;
+                response = dispatcher.Dispatch(request);
+              } catch (const rtsp::ParseError &ex) {
+                std::cout << "Can't parse request: " << ex.what() << std::endl;
+                response = {400, "Bad Request"};
+              }
 
-        socket << response << std::endl;
-        std::cout << "\nResponse:\n" << response << std::endl;
+              *socket_ptr << response << std::endl;
+              std::cout << "\nResponse:\n" << response << std::endl;
+              if (request.method == rtsp::Method::kTeardown) {
+                close_connection = true;
+              }
+            }
+          } catch (const sock::ReadError &ex) {
+            std::cout << "Socket " << socket_ptr->GetDescriptor() << " closed" << std::endl;
+          }
+        }, client_socket_ptr));
       }
     }
   } catch (const std::exception &ex) {
