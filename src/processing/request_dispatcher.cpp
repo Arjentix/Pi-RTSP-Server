@@ -160,7 +160,7 @@ RequestDispatcher &RequestDispatcher::RegisterServlet(
   return *this;
 }
 
-rtsp::Response RequestDispatcher::Dispatch(rtsp::Request request) {
+rtsp::Response RequestDispatcher::Dispatch(rtsp::Request request) const {
   if (!request.headers.count(kCSeq)) {
     return {400, "Bad Request"};
   }

@@ -60,7 +60,7 @@ class RequestDispatcher {
    * @return Response from servlet if such was found
    * @return Response with error in other way
    */
-  rtsp::Response Dispatch(rtsp::Request request);
+  rtsp::Response Dispatch(rtsp::Request request) const;
 
  private:
   using UrlToServletMap = std::map<std::string, std::shared_ptr<Servlet>>;
