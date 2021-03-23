@@ -58,7 +58,8 @@ is_moved_(false) {
 
 Socket::Socket(int descriptor) :
 descriptor_(descriptor),
-is_moved_(false) {}
+is_moved_(false) {
+}
 
 Socket::Socket(Socket &&other) :
 descriptor_(other.descriptor_),
@@ -72,6 +73,10 @@ Socket::~Socket() {
   }
 }
 
+
+int Socket::GetDescriptor() const {
+  return descriptor_;
+}
 
 std::string Socket::Read(int n) {
   auto buf_ptr = std::make_unique<char []>(n);
@@ -103,6 +108,7 @@ Socket &Socket::operator=(Socket &&other) {
 Socket &operator<<(Socket &socket, std::ostream &(*f)(std::ostream &)) {
   if (f == &(std::endl<char, std::char_traits<char>>)) {
     socket.Send(socket.ss_buffer_.str());
+    socket.ss_buffer_.str("");
     socket.ss_buffer_.clear();
   } else {
     f(socket.ss_buffer_);

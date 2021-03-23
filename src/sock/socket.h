@@ -64,6 +64,12 @@ class Socket {
 
 
   /**
+   * @brief Get socket descriptor
+   * @return descriptor
+   */
+  int GetDescriptor() const;
+
+  /**
    * @brief Read n chars
    *
    * @param n number of chars to read. Default is 256
