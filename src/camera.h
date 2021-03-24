@@ -27,7 +27,7 @@ SOFTWARE.
 #include "raspicam.h"
 
 class Camera {
-public:
+ public:
   Camera() = delete;
   Camera(const Camera &) = delete;
   Camera &operator=(const Camera &) = delete;

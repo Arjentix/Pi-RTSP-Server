@@ -35,7 +35,7 @@ SOFTWARE.
 
 namespace sock {
 
-ServerSocket::ServerSocket(Type type, int port_number):
+ServerSocket::ServerSocket(Type type, int port_number) :
 Socket(type) {
   if (fcntl(descriptor_, F_SETFL, fcntl(descriptor_, F_GETFL, 0) | O_NONBLOCK) < 0) {
     throw ServerSocketException("Can't set non blocking option for socket");
@@ -60,19 +60,19 @@ Socket(type) {
 
 std::optional<Socket> ServerSocket::TryAccept(int sec) const {
   fd_set inputs;
-  struct timeval timeout;
+  timeval timeout;
   FD_ZERO(&inputs);
   FD_SET(descriptor_, &inputs);
 
   timeout.tv_sec = sec;
   timeout.tv_usec = 0;
 
-  int select_res = select(FD_SETSIZE, &inputs, NULL, NULL, &timeout);
+  int select_res = select(FD_SETSIZE, &inputs, nullptr, nullptr, &timeout);
   if (select_res <= 0) {
     return std::nullopt;
   }
 
-  int client_descriptor = accept(descriptor_, NULL, NULL);
+  int client_descriptor = accept(descriptor_, nullptr, nullptr);
   if (client_descriptor < 0) {
     throw AcceptError(std::string("Can't accept client: ") + strerror(errno));
   }

@@ -37,10 +37,10 @@ namespace rtcp {
  * @brief Sender Report RTCP Packet
  */
 struct SenderReport {
-  unsigned int version : 2; //!< RTP (RTCP) version
-  unsigned int padding : 1; //!< Padding bit
+  unsigned int version: 2; //!< RTP (RTCP) version
+  unsigned int padding: 1; //!< Padding bit
   //! The number of reception report blocks
-  unsigned int reception_report_count : 5;
+  unsigned int reception_report_count: 5;
   //! Contains the constant 200 to identify this as an RTCP SR packet
   uint8_t packet_type = 200;
   uint16_t length; //!< The length of this RTCP packet in 32-bit words minus one

@@ -25,4 +25,4 @@ SOFTWARE.
 #include "camera_opening_error.h"
 
 CameraOpeningError::CameraOpeningError(std::string_view message) :
-std::runtime_error(message.data()){}
+    std::runtime_error(message.data()) {}

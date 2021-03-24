@@ -58,10 +58,9 @@ class Socket {
    */
   explicit Socket(int descriptor);
 
-  Socket(Socket&& other);
+  Socket(Socket &&other);
 
   virtual ~Socket();
-
 
   /**
    * @brief Get socket descriptor
@@ -83,7 +82,6 @@ class Socket {
    * @param str string to be sended
    */
   void Send(std::string_view str);
-
 
   Socket &operator=(Socket &&other);
 

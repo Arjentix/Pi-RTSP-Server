@@ -39,13 +39,13 @@ struct Header {
   //! Max number of contributing sources
   static const std::size_t kContributingSourcesMaxCount = 15;
 
-  unsigned int version : 2; //!< RTP version
-  unsigned int padding : 1; //!< Padding bit
-  unsigned int extension : 1; //!< Extension bit
+  unsigned int version: 2; //!< RTP version
+  unsigned int padding: 1; //!< Padding bit
+  unsigned int extension: 1; //!< Extension bit
   //!< Number of CSRC identifiers. Equals to contributing_sources.size()
-  unsigned int csrc_count : 4;
-  unsigned int marker : 1; //!< The interpretation of this is defined by a profile
-  unsigned int payload_type : 7; //!< Identifies the format of the RTP payload
+  unsigned int csrc_count: 4;
+  unsigned int marker: 1; //!< The interpretation of this is defined by a profile
+  unsigned int payload_type: 7; //!< Identifies the format of the RTP payload
   uint16_t sequence_number; //!< Increments by one for each RTP data packet sent
   //! The timestamp reflects the sampling instant of the first octet in the RTP data packet
   uint32_t timestamp;

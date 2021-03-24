@@ -73,13 +73,12 @@ Socket::~Socket() {
   }
 }
 
-
 int Socket::GetDescriptor() const {
   return descriptor_;
 }
 
 std::string Socket::Read(int n) {
-  auto buf_ptr = std::make_unique<char []>(n);
+  auto buf_ptr = std::make_unique<char[]>(n);
   int res = recv(descriptor_, buf_ptr.get(), n, 0);
 
   if (res < 0) {

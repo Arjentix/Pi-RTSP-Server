@@ -38,7 +38,7 @@ namespace mjpeg {
 struct Header {
   uint8_t type_specific; //!< Interpretation depends on the value of the type field
   //! The offset in bytes of the current packet in the JPEG frame data
-  unsigned int fragment_offset : 24;
+  unsigned int fragment_offset: 24;
   uint8_t type; //!< Specifies how to recover image
   uint8_t quality; //!< Image quality
   uint8_t width; //!< Image width divided by 8 pixels

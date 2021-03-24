@@ -43,12 +43,11 @@ std::ostream &operator<<(std::ostream &os, const Attribute &attribute);
  * @brief Struct with Time Description of SDP format
  */
 struct TimeDescription {
-  std::pair<uint64_t , uint64_t> active_time; //!< Mandatory. Time the session is active
+  std::pair<uint64_t, uint64_t> active_time; //!< Mandatory. Time the session is active
   std::optional<int> repeat; //!< Optional. Zero or more repeat times
 };
 
 std::ostream &operator<<(std::ostream &os, const TimeDescription &time_description);
-
 
 /**
  * @brief Struct with Media description in SDP format
@@ -65,7 +64,6 @@ struct MediaDescription {
 };
 
 std::ostream &operator<<(std::ostream &os, const MediaDescription &media_description);
-
 
 /**
  * @brief Struct with Session description in SDP format

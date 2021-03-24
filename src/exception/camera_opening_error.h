@@ -29,5 +29,5 @@ SOFTWARE.
 
 class CameraOpeningError : public std::runtime_error {
  public:
-    CameraOpeningError(std::string_view message);
+  CameraOpeningError(std::string_view message);
 };

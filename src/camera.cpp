@@ -34,7 +34,7 @@ raspicam::RaspiCam OpenCamera() {
   raspicam::RaspiCam camera;
   camera.setFormat(raspicam::RASPICAM_FORMAT_RGB);
   if (!camera.open()) {
-      throw CameraOpeningError("Can't open camera");
+    throw CameraOpeningError("Can't open camera");
   }
 
   sleep(3);

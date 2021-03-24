@@ -41,7 +41,6 @@ class ParseError : public std::runtime_error {
   ParseError(std::string_view message);
 };
 
-
 /**
  * @brief All possible Client -> Server methods
  */
@@ -66,7 +65,6 @@ enum class Method {
  */
 std::string MethodToString(Method method);
 
-
 /**
  * @brief Specific hasher for header names to provide case-insensitivity
  */
@@ -78,9 +76,8 @@ struct HeaderNameHash {
  * @brief Specific equal for header names to provide case-insensitivity
  */
 struct HeaderNameEqual {
-   bool operator()(std::string lhs, std::string rhs) const;
+  bool operator()(std::string lhs, std::string rhs) const;
 };
-
 
 /**
  * @brief Request from Client to Server

@@ -27,25 +27,24 @@ SOFTWARE.
 namespace sock {
 
 SocketException::SocketException(std::string_view message) :
-std::runtime_error(message.data()) {}
+    std::runtime_error(message.data()) {}
 
 ReadError::ReadError(std::string_view message) :
-SocketException(message) {}
+    SocketException(message) {}
 
 SendError::SendError(std::string_view message) :
-SocketException(message) {}
-
+    SocketException(message) {}
 
 ServerSocketException::ServerSocketException(std::string_view message) :
-SocketException(message) {}
+    SocketException(message) {}
 
 BindError::BindError(std::string_view message) :
-ServerSocketException(message) {}
+    ServerSocketException(message) {}
 
 ListenError::ListenError(std::string_view message) :
-ServerSocketException(message) {}
+    ServerSocketException(message) {}
 
 AcceptError::AcceptError(std::string_view message) :
-ServerSocketException(message) {}
+    ServerSocketException(message) {}
 
 } // namespace sock

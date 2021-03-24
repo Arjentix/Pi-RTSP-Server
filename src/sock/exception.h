@@ -46,7 +46,6 @@ class SendError : public SocketException {
   SendError(std::string_view message);
 };
 
-
 /**
  * @brief Base class for ServerSocket exceptions
  */

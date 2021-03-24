@@ -84,35 +84,25 @@ ServletMethod ChooseServletMethod(rtsp::Method rtsp_method) {
   ServletMethod servlet_method = nullptr;
 
   switch (rtsp_method) {
-    case rtsp::Method::kDescribe:
-      servlet_method = &processing::Servlet::ServeDescribe;
+    case rtsp::Method::kDescribe:servlet_method = &processing::Servlet::ServeDescribe;
       break;
-    case rtsp::Method::kAnnounce:
-      servlet_method = &processing::Servlet::ServeAnnounce;
+    case rtsp::Method::kAnnounce:servlet_method = &processing::Servlet::ServeAnnounce;
       break;
-    case rtsp::Method::kGetParameter:
-      servlet_method = &processing::Servlet::ServeGetParameter;
+    case rtsp::Method::kGetParameter:servlet_method = &processing::Servlet::ServeGetParameter;
       break;
-    case rtsp::Method::kPause:
-      servlet_method = &processing::Servlet::ServePause;
+    case rtsp::Method::kPause:servlet_method = &processing::Servlet::ServePause;
       break;
-    case rtsp::Method::kPlay:
-      servlet_method = &processing::Servlet::ServePlay;
+    case rtsp::Method::kPlay:servlet_method = &processing::Servlet::ServePlay;
       break;
-    case rtsp::Method::kRecord:
-      servlet_method = &processing::Servlet::ServeRecord;
+    case rtsp::Method::kRecord:servlet_method = &processing::Servlet::ServeRecord;
       break;
-    case rtsp::Method::kSetup:
-      servlet_method = &processing::Servlet::ServeSetup;
+    case rtsp::Method::kSetup:servlet_method = &processing::Servlet::ServeSetup;
       break;
-    case rtsp::Method::kSetParameter:
-      servlet_method = &processing::Servlet::ServeSetParameter;
+    case rtsp::Method::kSetParameter:servlet_method = &processing::Servlet::ServeSetParameter;
       break;
-    case rtsp::Method::kTeardown:
-      servlet_method = &processing::Servlet::ServeTeardown;
+    case rtsp::Method::kTeardown:servlet_method = &processing::Servlet::ServeTeardown;
       break;
-    default:
-      throw std::out_of_range("Unknown method");
+    default:throw std::out_of_range("Unknown method");
   }
 
   return servlet_method;
@@ -150,7 +140,7 @@ acceptable_methods_({rtsp::Method::kOptions}),
 acceptable_urls_() {}
 
 RequestDispatcher &RequestDispatcher::RegisterServlet(
-  const std::string &url, std::shared_ptr<Servlet> servlet_ptr) {
+    const std::string &url, std::shared_ptr<Servlet> servlet_ptr) {
   auto res = url_to_servlet_.insert({std::move(url), servlet_ptr});
   if (res.second) {
     acceptable_urls_.insert(res.first->first);
@@ -166,10 +156,10 @@ rtsp::Response RequestDispatcher::Dispatch(rtsp::Request request) const {
   }
 
   rtsp::Response response = {
-    0, "",
-    {
-      {kCSeq, request.headers.at(kCSeq)}
-    }
+      0, "",
+      {
+          {kCSeq, request.headers.at(kCSeq)}
+      }
   };
 
   if (request.version != 1.0) {
@@ -202,8 +192,8 @@ rtsp::Response RequestDispatcher::Dispatch(rtsp::Request request) const {
     response.description = "Bad Request";
   }
   catch (const std::out_of_range &ex) {
-      response.code = 404;
-      response.description = "Not Found";
+    response.code = 404;
+    response.description = "Not Found";
   }
   catch (const std::runtime_error &ex) {
     response.code = 500;
@@ -215,14 +205,14 @@ rtsp::Response RequestDispatcher::Dispatch(rtsp::Request request) const {
 
 rtsp::Response RequestDispatcher::GetOptions() const {
   return {200, "OK",
-    {
-      {"Public", MethodsToString(acceptable_methods_)}
-    }
+      {
+          {"Public", MethodsToString(acceptable_methods_)}
+      }
   };
 }
 
 RequestDispatcher::UrlToServletMap::const_iterator RequestDispatcher::ChooseServlet(
-  const std::string &url) const {
+    const std::string &url) const {
   if (url_to_servlet_.size() == 0) {
     throw std::out_of_range("There aren't any servlets at all");
   }

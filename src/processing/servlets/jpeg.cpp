@@ -44,7 +44,8 @@ using namespace std::literals::string_literals;
  * @param track_name Name of the video tack
  * @return Video media description
  */
-sdp::MediaDescription BuildMediaDescription(const std::string &ip_address, const std::string &track_name) {
+sdp::MediaDescription BuildMediaDescription(const std::string &ip_address,
+                                            const std::string &track_name) {
   const int kMediaFormatCode = 26; // Jpeg code
 
   sdp::MediaDescription media_descr;
@@ -57,12 +58,12 @@ sdp::MediaDescription BuildMediaDescription(const std::string &ip_address, const
   const uint height = Camera::GetInstance().getHeight();
   const uint width = Camera::GetInstance().getWidth();
   media_descr.attributes.emplace_back(
-    "cliprect",
-    "0,0,"s + std::to_string(height) + "," + std::to_string(width));
+      "cliprect",
+      "0,0,"s + std::to_string(height) + "," + std::to_string(width));
 
   media_descr.attributes.emplace_back(
-    "framerate",
-    std::to_string(Camera::GetInstance().getFrameRate()));
+      "framerate",
+      std::to_string(Camera::GetInstance().getFrameRate()));
 
   return media_descr;
 }
@@ -127,7 +128,7 @@ std::pair<int, int> ExtractClientPorts(const std::string &transport) {
 
 namespace processing::servlets {
 
-Jpeg::Jpeg():
+Jpeg::Jpeg() :
 client_connected_(false),
 teardown_(false),
 session_id_(0),
@@ -158,11 +159,11 @@ rtsp::Response Jpeg::ServeDescribe(const rtsp::Request &) {
   std::string descr_str = oss.str();
 
   return {200, "OK",
-    {
-        {"Content-Type", "application/sdp"},
-        {"Content-Length", std::to_string(descr_str.length())}
-    },
-    descr_str
+          {
+              {"Content-Type", "application/sdp"},
+              {"Content-Length", std::to_string(descr_str.length())}
+          },
+          descr_str
   };
 }
 
@@ -195,9 +196,9 @@ rtsp::Response Jpeg::ServeSetup(const rtsp::Request &request) {
   response.headers[kSessionHeader] = std::to_string(session_id_);
   client_ports_ = ExtractClientPorts(request.headers.at(kTransportHeader));
   response.headers[kTransportHeader] = "RTP/AVP;unicast;"s + "client_port=" +
-    std::to_string(client_ports_.first) + "-" +
-    std::to_string(client_ports_.second) + ";server_port=" +
-    std::to_string(kServerPorts.first) + "-" + std::to_string(kServerPorts.second);
+      std::to_string(client_ports_.first) + "-" +
+      std::to_string(client_ports_.second) + ";server_port=" +
+      std::to_string(kServerPorts.first) + "-" + std::to_string(kServerPorts.second);
 
   return response;
 }
@@ -215,9 +216,9 @@ rtsp::Response Jpeg::ServePlay(const rtsp::Request &request) {
   play_worker_notifier_.notify_one();
 
   return {200, "OK",
-    {
-      {"Range", "0.000-"}
-    }
+      {
+          {"Range", "0.000-"}
+      }
   };
 }
 
@@ -240,9 +241,9 @@ void Jpeg::PlayWorkerThread() {
   for (;;) {
     std::unique_lock lock(play_worker_mutex_);
     play_worker_notifier_.wait(lock,
-      [&play_queue = play_queue_, &play_worker_stop = play_worker_stop_] {
-        return (!play_queue.empty() || play_worker_stop);
-      }
+         [&play_queue = play_queue_, &play_worker_stop = play_worker_stop_] {
+           return (!play_queue.empty() || play_worker_stop);
+         }
     );
 
     if (play_worker_stop_) {

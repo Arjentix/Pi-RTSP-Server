@@ -75,7 +75,7 @@ rtsp::Method ParseMethod(std::string &&method_str) {
   } else if (method_str == "TEARDOWN") {
     method = rtsp::Method::kTeardown;
   } else {
-      throw rtsp::ParseError("Unknown method " + method_str);
+    throw rtsp::ParseError("Unknown method " + method_str);
   }
 
   return method;
@@ -159,8 +159,7 @@ int ExtractContentLength(const rtsp::Request &request) {
 namespace rtsp {
 
 ParseError::ParseError(std::string_view message) :
-std::runtime_error(message.data()) {}
-
+    std::runtime_error(message.data()) {}
 
 std::string MethodToString(Method method) {
   std::string method_str;
@@ -202,7 +201,6 @@ std::string MethodToString(Method method) {
 
   return method_str;
 }
-
 
 std::size_t HeaderNameHash::operator()(std::string header_name) const {
   TransformToLowerCase(header_name);

@@ -47,8 +47,8 @@ processing::RequestDispatcher BuildRequestDispatcher() {
   processing::RequestDispatcher request_dispatcher;
 
   request_dispatcher.RegisterServlet(
-    "/jpeg",
-    std::make_shared<processing::servlets::Jpeg>()
+      "/jpeg",
+      std::make_shared<processing::servlets::Jpeg>()
   );
 
   return request_dispatcher;

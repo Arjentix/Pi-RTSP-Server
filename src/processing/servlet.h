@@ -38,13 +38,12 @@ class Servlet {
  public:
   virtual ~Servlet();
 
-   /**
-    * @brief Get all methods, that this Servlet can properly handle
-    *
-    * @return Set of acceptable RTSP methods
-    */
+  /**
+   * @brief Get all methods, that this Servlet can properly handle
+   *
+   * @return Set of acceptable RTSP methods
+   */
   std::unordered_set<rtsp::Method> GetAcceptableMethods() const;
-
 
   /**
    * @brief Serve DESCRIBE RTSP request
