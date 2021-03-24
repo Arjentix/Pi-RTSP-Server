@@ -54,6 +54,37 @@ processing::RequestDispatcher BuildRequestDispatcher() {
   return request_dispatcher;
 }
 
+void HandleClient(const processing::RequestDispatcher &dispatcher,
+                  std::shared_ptr<sock::Socket> socket_ptr) {
+  try {
+    bool close_connection = false;
+    while (!close_connection) {
+      rtsp::Response response;
+      rtsp::Request request;
+
+      try {
+        *socket_ptr >> request;
+        std::cout << "Request:\n" << request << std::endl;
+        response = dispatcher.Dispatch(request);
+      } catch (const rtsp::ParseError &ex) {
+        std::cout << "Can't parse request: " << ex.what() << std::endl;
+        response = {400, "Bad Request"};
+      }
+
+      *socket_ptr << response << std::endl;
+      std::cout << "\nResponse:\n" << response << std::endl;
+      if (request.method == rtsp::Method::kTeardown) {
+        close_connection = true;
+      }
+    }
+  } catch (const sock::ReadError &ex) {
+    std::cout << "Client on socket " << socket_ptr->GetDescriptor()
+              << " disconnected" << std::endl;
+  }
+  std::cout << "Socket " << socket_ptr->GetDescriptor()
+            << " closed" << std::endl;
+}
+
 } // namespace
 
 int main(int /*argc*/, char **/*argv*/) {
@@ -73,34 +104,10 @@ int main(int /*argc*/, char **/*argv*/) {
     while (!stop_flag) {
       std::optional<sock::Socket> socket_opt = server_socket.TryAccept(kAcceptTimeout);
       if (socket_opt.has_value()) {
-        std::cout << "Connected client on socket " << socket_opt.value().GetDescriptor() << std::endl;
-        std::shared_ptr<sock::Socket> client_socket_ptr = std::make_shared<sock::Socket>(std::move(socket_opt.value()));
-        futures.push_back(std::async([&dispatcher] (std::shared_ptr<sock::Socket> socket_ptr) {
-          try {
-            bool close_connection = false;
-            while (!close_connection) {
-              rtsp::Response response;
-              rtsp::Request request;
-
-              try {
-                *socket_ptr >> request;
-                std::cout << "Request:\n" << request << std::endl;
-                response = dispatcher.Dispatch(request);
-              } catch (const rtsp::ParseError &ex) {
-                std::cout << "Can't parse request: " << ex.what() << std::endl;
-                response = {400, "Bad Request"};
-              }
-
-              *socket_ptr << response << std::endl;
-              std::cout << "\nResponse:\n" << response << std::endl;
-              if (request.method == rtsp::Method::kTeardown) {
-                close_connection = true;
-              }
-            }
-          } catch (const sock::ReadError &ex) {
-            std::cout << "Socket " << socket_ptr->GetDescriptor() << " closed" << std::endl;
-          }
-        }, client_socket_ptr));
+        std::cout << "Connected client on socket "
+                  << socket_opt.value().GetDescriptor() << std::endl;
+        auto client_socket_ptr = std::make_shared<sock::Socket>(std::move(socket_opt.value()));
+        futures.push_back(std::async(HandleClient, dispatcher, client_socket_ptr));
       }
     }
   } catch (const std::exception &ex) {
