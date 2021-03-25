@@ -256,8 +256,15 @@ void Jpeg::PlayWorkerThread() {
     lock.unlock();
 
     std::cout << "Processing PLAY request..." << std::endl;
+    const std::string kClientAddr = play_request.client_ip + ":" +
+                                    std::to_string(client_ports_.first);
     sock::ClientSocket socket(sock::Type::kUdp);
-    socket.Connect(play_request.client_ip, client_ports_.first);
+    if (!socket.Connect(play_request.client_ip, client_ports_.first)) {
+      std::cout << "Can't connect to the RTP client " << kClientAddr << std::endl;
+      return;
+    }
+    std::cout << "Connected with the RTP client " << kClientAddr << std::endl;
+
     for (;;) {
       {
         std::lock_guard guard(play_worker_mutex_);
@@ -273,6 +280,8 @@ void Jpeg::PlayWorkerThread() {
       // Send
       // May be split image in different packets ???
     }
+
+    std::cout << "Disconnecting RTP client " << kClientAddr << std::endl;
   }
 }
 
