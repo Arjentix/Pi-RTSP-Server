@@ -238,6 +238,7 @@ sock::Socket &operator>>(sock::Socket &socket, Request &request) {
   }
 
   request = ParseRequest(std::move(request_str));
+  request.client_ip = socket.GetPeerName();
 
   const int content_length = ExtractContentLength(request);
   const int diff = content_length - request.body.size();

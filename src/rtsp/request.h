@@ -86,6 +86,7 @@ struct Request {
   using Headers = std::unordered_map<std::string, std::string,
                                      HeaderNameHash, HeaderNameEqual>;
 
+  std::string client_ip;
   Method method;
   std::string url;
   float version;
