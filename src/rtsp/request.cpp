@@ -234,7 +234,7 @@ sock::Socket &operator>>(sock::Socket &socket, Request &request) {
   std::string request_str;
   while (request_str.rfind("\r\n\r\n") == std::string::npos) {
     constexpr int kBuffSize = 1024;
-    request_str = socket.Read(kBuffSize);
+    request_str += socket.Read(kBuffSize);
   }
 
   request = ParseRequest(std::move(request_str));
