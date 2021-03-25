@@ -69,6 +69,13 @@ class Socket {
   int GetDescriptor() const;
 
   /**
+   * @brief Get ip address of the peer
+   * @return String with ip address in success
+   * @return Empty string in other way
+   */
+  std::string GetPeerName() const;
+
+  /**
    * @brief Read n chars
    *
    * @param n number of chars to read. Default is 256

@@ -25,8 +25,9 @@ SOFTWARE.
 #include "socket.h"
 
 #include <cstring>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 
 #include <memory>
@@ -75,6 +76,18 @@ Socket::~Socket() {
 
 int Socket::GetDescriptor() const {
   return descriptor_;
+}
+
+std::string Socket::GetPeerName() const {
+  sockaddr_in peer_addr;
+  int peer_len = sizeof(peer_addr);
+  int res = getpeername(descriptor_, reinterpret_cast<sockaddr *>(&peer_addr),
+                        reinterpret_cast<socklen_t *>(&peer_len));
+  if (res != 0) {
+    return "";
+  }
+
+  return inet_ntoa(peer_addr.sin_addr);
 }
 
 std::string Socket::Read(int n) {
