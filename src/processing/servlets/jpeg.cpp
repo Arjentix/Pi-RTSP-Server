@@ -255,7 +255,14 @@ void Jpeg::PlayWorkerThread() {
     lock.unlock();
 
     std::cout << "Processing PLAY request..." << std::endl;
-    // ...
+//    while (!end) {
+      // Connect to the client
+      // Grab the image
+      // Pack it to the MJPEG packet
+      // Pack MJPEG to the RTP packet
+      // Send
+      // May be split image in different packets ???
+//    }
   }
 }
 
