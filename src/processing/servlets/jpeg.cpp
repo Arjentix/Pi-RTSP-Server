@@ -275,6 +275,12 @@ void Jpeg::PlayWorkerThread() {
       }
 
       // Grab the image
+      raspicam::RaspiCam &camera = Camera::GetInstance();
+      camera.grab();
+      auto image_ptr = std::make_unique<unsigned char[]>(
+          camera.getImageTypeSize(raspicam::RASPICAM_FORMAT_RGB));
+      camera.retrieve(image_ptr.get());
+
       // Pack it to the MJPEG packet
       // Pack MJPEG to the RTP packet
       // Send
