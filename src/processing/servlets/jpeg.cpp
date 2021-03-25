@@ -32,6 +32,7 @@ SOFTWARE.
 
 #include "sdp/session_description.h"
 #include "camera.h"
+#include "sock/client_socket.h"
 
 namespace {
 
@@ -255,14 +256,23 @@ void Jpeg::PlayWorkerThread() {
     lock.unlock();
 
     std::cout << "Processing PLAY request..." << std::endl;
-//    while (!end) {
-      // Connect to the client
+    sock::ClientSocket socket(sock::Type::kUdp);
+    socket.Connect(play_request.client_ip, client_ports_.first);
+    for (;;) {
+      {
+        std::lock_guard guard(play_worker_mutex_);
+        if (teardown_) {
+          teardown_ = false;
+          break;
+        }
+      }
+
       // Grab the image
       // Pack it to the MJPEG packet
       // Pack MJPEG to the RTP packet
       // Send
       // May be split image in different packets ???
-//    }
+    }
   }
 }
 
