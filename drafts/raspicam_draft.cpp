@@ -24,7 +24,9 @@ DEALINGS IN THE SOFTWARE.*/
 
 #include <unistd.h>
 
-#include <fstream>
+#include <cstdio>
+#include <jpeglib.h>
+
 #include <iostream>
 #include <memory>
 
@@ -32,7 +34,61 @@ DEALINGS IN THE SOFTWARE.*/
 
 using namespace std;
 
-int main(int argc, char **argv) {
+void WriteJpegFile(JSAMPLE *image_buffer, int image_width, int image_height, const char * filename, int quality)
+{
+  // This struct contains the JPEG compression parameters
+  struct jpeg_compress_struct cinfo;
+  // This struct represents a JPEG error handler
+  struct jpeg_error_mgr jerr;
+
+  FILE * outfile;		    // target file
+  JSAMPROW row_pointer[1];	// pointer to JSAMPLE row[s]
+  int row_stride;		    // physical row width in image buffer
+
+  /* Step 1: allocate and initialize JPEG compression object */
+
+  cinfo.err = jpeg_std_error(&jerr);
+  jpeg_create_compress(&cinfo);
+
+  /* Step 2: specify data destination (eg, a file) */
+
+  if ((outfile = fopen(filename, "wb")) == NULL) {
+    fprintf(stderr, "can't open %s\n", filename);
+    exit(1);
+  }
+  jpeg_stdio_dest(&cinfo, outfile);
+
+  /* Step 3: set parameters for compression */
+
+  cinfo.image_width = image_width;
+  cinfo.image_height = image_height;
+  cinfo.input_components = 3;		// # of color components per pixel
+  cinfo.in_color_space = JCS_RGB; 	// colorspace of input image
+
+  jpeg_set_defaults(&cinfo);
+  jpeg_set_quality(&cinfo, quality, TRUE /* limit to baseline-JPEG values */);
+
+  /* Step 4: Start compressor */
+
+  jpeg_start_compress(&cinfo, TRUE);
+
+  row_stride = image_width * 3;	// JSAMPLEs per row in image_buffer
+
+  while (cinfo.next_scanline < cinfo.image_height) {
+    row_pointer[0] = & image_buffer[cinfo.next_scanline * row_stride];
+    (void) jpeg_write_scanlines(&cinfo, row_pointer, 1);
+  }
+
+  /* Step 5: Finish compression */
+
+  jpeg_finish_compress(&cinfo);
+  fclose(outfile);
+
+  /* Step 6: release JPEG compression object */
+  jpeg_destroy_compress(&cinfo);
+}
+
+int main() {
     raspicam::RaspiCam camera;  // Camera object
     camera.setFormat(raspicam::RASPICAM_FORMAT_RGB);
     cout << "Opening Camera..." << endl;
@@ -44,23 +100,16 @@ int main(int argc, char **argv) {
     cout << "Sleeping for 3 secs" << endl;
     sleep(3);
 
-    const int kImageCount = 5;
-    const string kFilename = "raspicam_image.ppm";
-    ofstream out_file(kFilename, std::ios::binary);
-    out_file << "P6\n" << camera.getWidth() << " "
-             << camera.getHeight() * kImageCount
-             << " 255\n";
+    const string kFilename = "raspicam_image.jpeg";
 
-    for (int i = 0; i < kImageCount; ++i) {
-        camera.grab();
-        auto data_ptr = make_unique<unsigned char[]>(
-            camera.getImageTypeSize(raspicam::RASPICAM_FORMAT_RGB));
-        // extract the image in rgb format
-        camera.retrieve(data_ptr.get());  // get camera image
-        // save
-        out_file.write(reinterpret_cast<char *>(data_ptr.get()),
-                       camera.getImageTypeSize(raspicam::RASPICAM_FORMAT_RGB));
-    }
+    camera.grab();
+    auto data_ptr = make_unique<unsigned char[]>(
+        camera.getImageTypeSize(raspicam::RASPICAM_FORMAT_RGB));
+    // extract the image in rgb format
+    camera.retrieve(data_ptr.get());  // get camera image
+    // save
+    WriteJpegFile(reinterpret_cast<JSAMPLE *>(data_ptr.get()), camera.getWidth(), camera.getHeight(), kFilename.c_str(), 50);
+
     cout << "Image saved at " << kFilename << endl;
     return 0;
 }
