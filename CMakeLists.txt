@@ -15,6 +15,7 @@ set(SOURCES
     ${SRC_DIR}/sock/exception.cpp
     ${SRC_DIR}/sock/socket.cpp
     ${SRC_DIR}/sock/server_socket.cpp
+    ${SRC_DIR}/sock/client_socket.cpp
     ${SRC_DIR}/processing/request_dispatcher.cpp
     ${SRC_DIR}/processing/servlet.cpp
     ${SRC_DIR}/processing/servlets/jpeg.cpp
