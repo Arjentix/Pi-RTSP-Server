@@ -79,7 +79,7 @@ class Socket {
   /**
    * @brief Send string
    *
-   * @param str string to be sended
+   * @param str string to be sent
    */
   void Send(std::string_view str);
 
@@ -115,7 +115,7 @@ Socket &operator<<(Socket &socket, const T &obj) {
 
 /**
  * @brief Output operator for std::endl and etc.
- * @details If std::endl is passed, than internal buffer will be sent to socket
+ * @details If std::endl is passed, than internal buffer will be sent to the socket
  *
  * @param socket Socket, which buffer will be processed
  * @param f Pointer to function that process ostream object
