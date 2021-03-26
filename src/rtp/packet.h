@@ -27,6 +27,7 @@ SOFTWARE.
 #include <cstdint>
 
 #include <array>
+#include <ostream>
 
 #include "byte.h"
 
@@ -66,5 +67,7 @@ struct Packet {
   Header header;
   Bytes payload;
 };
+
+std::ostream &operator<<(std::ostream &os, const Packet &packet);
 
 } // namespace rtp

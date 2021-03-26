@@ -64,9 +64,16 @@ class Jpeg : public Servlet {
   std::condition_variable play_worker_notifier_; //!< Cond. var. to interact with play_worker_
 
   /**
-   * @brief Extract PLAY request from queue and process it. Used in play_worker_
+   * @brief Extract PLAY request from queue and process it. Uses in play_worker_
    */
   void PlayWorkerThread();
+
+  /**
+   * @brief Directly handle play request
+   *
+   * @param request PLAY Request to handle
+   */
+  void HandlePlayRequest(const rtsp::Request &request);
 
   /**
    * @brief Check if provided session id is vallid

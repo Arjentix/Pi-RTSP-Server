@@ -33,8 +33,11 @@ SOFTWARE.
 
 #include "sdp/session_description.h"
 #include "camera.h"
+#include "sock/exception.h"
 #include "sock/client_socket.h"
 #include "rtp/byte.h"
+#include "rtp/mjpeg/packet.h"
+#include "rtp/packet.h"
 
 namespace {
 
@@ -323,16 +326,23 @@ void Jpeg::PlayWorkerThread() {
     play_queue_.pop();
     lock.unlock();
 
-    std::cout << "Processing PLAY request..." << std::endl;
-    const std::string kClientAddr = play_request.client_ip + ":" +
-                                    std::to_string(client_ports_.first);
-    sock::ClientSocket socket(sock::Type::kUdp);
-    if (!socket.Connect(play_request.client_ip, client_ports_.first)) {
-      std::cout << "Can't connect to the RTP client " << kClientAddr << std::endl;
-      return;
-    }
-    std::cout << "Connected with the RTP client " << kClientAddr << std::endl;
+    HandlePlayRequest(play_request);
+  }
+}
 
+void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
+  std::cout << "Processing PLAY request..." << std::endl;
+
+  const std::string kClientAddr = request.client_ip + ":" +
+      std::to_string(client_ports_.first);
+  sock::ClientSocket socket(sock::Type::kUdp);
+  if (!socket.Connect(request.client_ip, client_ports_.first)) {
+    std::cout << "Can't connect to the RTP client " << kClientAddr << std::endl;
+    return;
+  }
+  std::cout << "Connected with the RTP client " << kClientAddr << std::endl;
+
+  try {
     for (;;) {
       {
         std::lock_guard guard(play_worker_mutex_);
@@ -345,14 +355,20 @@ void Jpeg::PlayWorkerThread() {
       rtp::Bytes jpeg_image = GrabImage();
       std::cout << "Jpeg image size: " << jpeg_image.size() << std::endl;
 
-      // Pack it to the MJPEG packet
-      // Pack MJPEG to the RTP packet
-      // Send
-      // May be split image in different packets ???
+//    std::vector<rtp::mjpeg::Packet> mjpeg_packets = rtp::mjpeg::PackJpeg(jpeg_image);
+//
+//    for (auto it = mjpeg_packets.begin(); it != mjpeg_packets.end(); ++it) {
+//      const bool final = (it == std::prev(mjpeg_packets.end()));
+//      rtp::Packet rtp_packet = rtp::mjpeg::PackToRtpPacket(*it, final);
+//      socket << rtp_packet << std::endl;
+//    }
     }
-
-    std::cout << "Disconnecting RTP client " << kClientAddr << std::endl;
+  } catch (sock::SocketException &ex) {
+    std::cout << "Some error occurred during RTP packets translating: "
+              << ex.what() << std::endl;
   }
+
+  std::cout << "Disconnecting RTP client " << kClientAddr << std::endl;
 }
 
 bool Jpeg::CheckSession(const rtsp::Request &request) const {

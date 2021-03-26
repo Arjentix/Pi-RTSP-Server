@@ -25,8 +25,10 @@ SOFTWARE.
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 #include "rtp/byte.h"
+#include "rtp/packet.h"
 
 namespace rtp {
 
@@ -61,6 +63,21 @@ struct Packet {
   Header header;
   Bytes payload;
 };
+
+/**
+ * @brief Pack and split JPEG image into MJPEG over RTP packets
+ *
+ * @param jpeg Bytes of the JPEG image
+ * @return Vector of MJPEG packets
+ */
+std::vector<Packet> PackJpeg(const Bytes &jpeg);
+
+/**
+ * @brief Pack MJPEG
+ * @param mjpeg_packet
+ * @return
+ */
+rtp::Packet PackToRtpPacket(const mjpeg::Packet &mjpeg_packet, bool final);
 
 } // namespace mjpeg
 
