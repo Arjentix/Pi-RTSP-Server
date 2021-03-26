@@ -25,10 +25,6 @@ set(SOURCES
 set(BUILD_CV OFF)
 add_subdirectory(external/raspicam)
 
-# Making off_t type use 64 bit size to fix tinyalsa build
-#add_compile_definitions(_FILE_OFFSET_BITS=64)
-#add_subdirectory(external/tinyalsa)
-
 find_package(JPEG)
 
 add_executable(${CMAKE_PROJECT_NAME} ${SOURCES})
@@ -36,13 +32,11 @@ add_executable(${CMAKE_PROJECT_NAME} ${SOURCES})
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${SRC_DIR}
     external/raspicam/src/
-#    external/tinyalsa/include/
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
     raspicam
     JPEG::JPEG
-#    tinyalsa
 )
 
 set_target_properties(${CMAKE_PROJECT_NAME}

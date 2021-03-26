@@ -1,6 +1,3 @@
 [submodule "external/raspicam"]
 	path = external/raspicam
 	url = https://github.com/rmsalinas/raspicam
-[submodule "external/tinyalsa"]
-	path = external/tinyalsa
-	url = https://github.com/tinyalsa/tinyalsa
