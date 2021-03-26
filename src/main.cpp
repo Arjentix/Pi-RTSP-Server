@@ -64,7 +64,7 @@ void HandleClient(const processing::RequestDispatcher &dispatcher,
 
       try {
         *socket_ptr >> request;
-        std::cout << "Request:\n" << request << std::endl;
+        std::cout << "\nRequest:\n" << request << std::endl;
         response = dispatcher.Dispatch(request);
       } catch (const rtsp::ParseError &ex) {
         std::cout << "Can't parse request: " << ex.what() << std::endl;
@@ -77,9 +77,12 @@ void HandleClient(const processing::RequestDispatcher &dispatcher,
         close_connection = true;
       }
     }
-  } catch (const sock::ReadError &ex) {
+  } catch (const sock::ReadError &) {
     std::cout << "Client on socket " << socket_ptr->GetDescriptor()
               << " disconnected" << std::endl;
+  } catch (const sock::SendError &) {
+    std::cout << "Client on socket " << socket_ptr->GetDescriptor()
+              << " disconnected while was waiting for response" << std::endl;
   }
   std::cout << "Socket " << socket_ptr->GetDescriptor()
             << " closed" << std::endl;
