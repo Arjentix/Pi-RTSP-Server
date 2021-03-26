@@ -29,6 +29,7 @@ add_subdirectory(external/raspicam)
 #add_compile_definitions(_FILE_OFFSET_BITS=64)
 #add_subdirectory(external/tinyalsa)
 
+find_package(JPEG)
 
 add_executable(${CMAKE_PROJECT_NAME} ${SOURCES})
 
@@ -40,6 +41,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
     raspicam
+    JPEG::JPEG
 #    tinyalsa
 )
 

@@ -29,10 +29,12 @@ SOFTWARE.
 #include <iostream>
 #include <chrono>
 #include <random>
+#include <jpeglib.h>
 
 #include "sdp/session_description.h"
 #include "camera.h"
 #include "sock/client_socket.h"
+#include "rtp/byte.h"
 
 namespace {
 
@@ -123,6 +125,72 @@ std::pair<int, int> ExtractClientPorts(const std::string &transport) {
   }
 
   return {0, 0};
+}
+
+/**
+ * @brief Convert raw image data to jpeg data
+ *
+ * @param raw_image Pointer to raw image data
+ * @param width Image width
+ * @param height Image height
+ * @param quality Quality of resulting image in [0, 100] range
+ * @return Jpeg image in bytes
+ */
+rtp::Bytes ConvertToJpeg(JSAMPLE *raw_image, const int width, const int height,
+                         const int quality) {
+  jpeg_compress_struct cinfo;
+  jpeg_error_mgr jerr;
+  unsigned char *buffer = nullptr;
+  unsigned long buffer_size = 0;
+
+  JSAMPROW row_pointer[1];	// pointer to JSAMPLE row[s]
+  int row_stride;		    // physical row width in image buffer
+
+  cinfo.err = jpeg_std_error(&jerr);
+  jpeg_create_compress(&cinfo);
+
+  jpeg_mem_dest(&cinfo, &buffer, &buffer_size);
+
+  cinfo.image_width = width;
+  cinfo.image_height = height;
+  cinfo.input_components = 3;		// # of color components per pixel
+  cinfo.in_color_space = JCS_RGB; 	// colorspace of input image
+
+  jpeg_set_defaults(&cinfo);
+  jpeg_set_quality(&cinfo, quality, TRUE /* limit to baseline-JPEG values */);
+
+  jpeg_start_compress(&cinfo, TRUE);
+
+  row_stride = width * 3;	// JSAMPLEs per row in image_buffer
+
+  while (cinfo.next_scanline < cinfo.image_height) {
+    row_pointer[0] = & raw_image[cinfo.next_scanline * row_stride];
+    (void) jpeg_write_scanlines(&cinfo, row_pointer, 1);
+  }
+
+  jpeg_finish_compress(&cinfo);
+  jpeg_destroy_compress(&cinfo);
+
+  rtp::Bytes res(buffer, buffer + buffer_size);
+  free(buffer);
+  return res;
+}
+
+/**
+ * @brief Grab image from camera in jpeg format
+ *
+ * @return Jpeg image in bytes
+ */
+rtp::Bytes GrabImage() {
+  const int kQuality = 50; // 0 - 100 %
+
+  raspicam::RaspiCam &camera = Camera::GetInstance();
+  camera.grab();
+  auto raw_image_ptr = std::make_unique<unsigned char[]>(
+      camera.getImageTypeSize(raspicam::RASPICAM_FORMAT_RGB));
+  camera.retrieve(raw_image_ptr.get());
+  return ConvertToJpeg(raw_image_ptr.get(), camera.getWidth(),
+                       camera.getHeight(), kQuality);
 }
 
 } // namespace
@@ -274,12 +342,8 @@ void Jpeg::PlayWorkerThread() {
         }
       }
 
-      // Grab the image
-      raspicam::RaspiCam &camera = Camera::GetInstance();
-      camera.grab();
-      auto image_ptr = std::make_unique<unsigned char[]>(
-          camera.getImageTypeSize(raspicam::RASPICAM_FORMAT_RGB));
-      camera.retrieve(image_ptr.get());
+      rtp::Bytes jpeg_image = GrabImage();
+      std::cout << "Jpeg image size: " << jpeg_image.size() << std::endl;
 
       // Pack it to the MJPEG packet
       // Pack MJPEG to the RTP packet
