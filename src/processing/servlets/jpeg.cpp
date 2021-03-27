@@ -288,7 +288,7 @@ rtsp::Response Jpeg::ServePlay(const rtsp::Request &request) {
 
   return {200, "OK",
       {
-          {"Range", "0.000-"}
+          {"Range", "npt=0.000-"}
       }
   };
 }
@@ -332,14 +332,14 @@ void Jpeg::PlayWorkerThread() {
 void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
   std::cout << "Processing PLAY request..." << std::endl;
 
-  const std::string kClientAddr = request.client_ip + ":" +
+  const std::string client_addr = request.client_ip + ":" +
       std::to_string(client_ports_.first);
   sock::ClientSocket socket(sock::Type::kUdp);
   if (!socket.Connect(request.client_ip, client_ports_.first)) {
-    std::cout << "Can't connect to the RTP client " << kClientAddr << std::endl;
+    std::cout << "Can't connect to the RTP client " << client_addr << std::endl;
     return;
   }
-  std::cout << "Connected with the RTP client " << kClientAddr << std::endl;
+  std::cout << "Connected with the RTP client " << client_addr << std::endl;
 
   try {
     for (;;) {
@@ -370,7 +370,7 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
               << ex.what() << std::endl;
   }
 
-  std::cout << "Disconnecting RTP client " << kClientAddr << std::endl;
+  std::cout << "Disconnecting RTP client " << client_addr << std::endl;
 }
 
 bool Jpeg::CheckSession(const rtsp::Request &request) const {
