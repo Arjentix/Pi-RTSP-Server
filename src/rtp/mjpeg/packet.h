@@ -30,9 +30,7 @@ SOFTWARE.
 #include "rtp/byte.h"
 #include "rtp/packet.h"
 
-namespace rtp {
-
-namespace mjpeg {
+namespace rtp::mjpeg {
 
 /**
  * @brief An MJPEG over RTP header
@@ -70,7 +68,7 @@ struct Packet {
  * @param jpeg Bytes of the JPEG image
  * @return Vector of MJPEG packets
  */
-std::vector<Packet> PackJpeg(const Bytes &jpeg);
+std::vector<Packet> PackJpeg(const Bytes &jpeg, int quality);
 
 /**
  * @brief Pack MJPEG
@@ -79,6 +77,4 @@ std::vector<Packet> PackJpeg(const Bytes &jpeg);
  */
 rtp::Packet PackToRtpPacket(const mjpeg::Packet &mjpeg_packet, bool final);
 
-} // namespace mjpeg
-
-} // namespace rtp
+} // namespace rtp::mjpeg

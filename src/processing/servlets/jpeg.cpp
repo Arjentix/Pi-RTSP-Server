@@ -182,18 +182,17 @@ rtp::Bytes ConvertToJpeg(JSAMPLE *raw_image, const int width, const int height,
 /**
  * @brief Grab image from camera in jpeg format
  *
+ * @param quality Quality of resulting image in [0, 100] range
  * @return Jpeg image in bytes
  */
-rtp::Bytes GrabImage() {
-  const int kQuality = 50; // 0 - 100 %
-
+rtp::Bytes GrabImage(const int quality) {
   raspicam::RaspiCam &camera = Camera::GetInstance();
   camera.grab();
   auto raw_image_ptr = std::make_unique<unsigned char[]>(
       camera.getImageTypeSize(raspicam::RASPICAM_FORMAT_RGB));
   camera.retrieve(raw_image_ptr.get());
   return ConvertToJpeg(raw_image_ptr.get(), camera.getWidth(),
-                       camera.getHeight(), kQuality);
+                       camera.getHeight(), quality);
 }
 
 } // namespace
@@ -352,10 +351,13 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
         }
       }
 
-      rtp::Bytes jpeg_image = GrabImage();
+      const int kQuality = 50; // 0 - 100 %
+      rtp::Bytes jpeg_image = GrabImage(kQuality);
       std::cout << "Jpeg image size: " << jpeg_image.size() << std::endl;
 
-//    std::vector<rtp::mjpeg::Packet> mjpeg_packets = rtp::mjpeg::PackJpeg(jpeg_image);
+      std::vector<rtp::mjpeg::Packet> mjpeg_packets =
+          rtp::mjpeg::PackJpeg(jpeg_image, kQuality);
+      std::cout << "Packed in " << mjpeg_packets.size() << " MJPEG packets" << std::endl;
 //
 //    for (auto it = mjpeg_packets.begin(); it != mjpeg_packets.end(); ++it) {
 //      const bool final = (it == std::prev(mjpeg_packets.end()));
