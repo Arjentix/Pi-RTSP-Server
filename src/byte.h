@@ -27,9 +27,5 @@ SOFTWARE.
 #include <cstdint>
 #include <vector>
 
-namespace rtp {
-
 using Byte = uint8_t;
 using Bytes = std::vector<Byte>;
-
-} // namespace rtp

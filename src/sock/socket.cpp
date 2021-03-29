@@ -110,6 +110,12 @@ void Socket::Send(std::string_view str) {
   }
 }
 
+void Socket::Send(const Bytes &bytes) {
+  if (send(descriptor_, bytes.data(), bytes.size(), 0) < 0) {
+    throw SendError(strerror(errno));
+  }
+}
+
 Socket &Socket::operator=(Socket &&other) {
   descriptor_ = other.descriptor_;
   other.is_moved_ = true;

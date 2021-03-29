@@ -35,7 +35,7 @@ SOFTWARE.
 #include "camera.h"
 #include "sock/exception.h"
 #include "sock/client_socket.h"
-#include "rtp/byte.h"
+#include "byte.h"
 #include "rtp/mjpeg/packet.h"
 #include "rtp/packet.h"
 
@@ -141,7 +141,7 @@ std::pair<int, int> ExtractClientPorts(const std::string &transport) {
  * @param quality Quality of resulting image in [0, 100] range
  * @return Jpeg image in bytes
  */
-rtp::Bytes ConvertToJpeg(JSAMPLE *raw_image, const int width, const int height,
+Bytes ConvertToJpeg(JSAMPLE *raw_image, const int width, const int height,
                          const int quality) {
   jpeg_compress_struct cinfo;
   jpeg_error_mgr jerr;
@@ -176,7 +176,7 @@ rtp::Bytes ConvertToJpeg(JSAMPLE *raw_image, const int width, const int height,
   jpeg_finish_compress(&cinfo);
   jpeg_destroy_compress(&cinfo);
 
-  rtp::Bytes res(buffer, buffer + buffer_size);
+  Bytes res(buffer, buffer + buffer_size);
   free(buffer);
   return res;
 }
@@ -187,7 +187,7 @@ rtp::Bytes ConvertToJpeg(JSAMPLE *raw_image, const int width, const int height,
  * @param quality Quality of resulting image in [0, 100] range
  * @return Jpeg image in bytes
  */
-rtp::Bytes GrabImage(const int quality) {
+Bytes GrabImage(const int quality) {
   raspicam::RaspiCam &camera = Camera::GetInstance();
   camera.grab();
   auto raw_image_ptr = std::make_unique<unsigned char[]>(
@@ -359,7 +359,7 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
       }
 
       const int kQuality = 50; // 0 - 100 %
-      rtp::Bytes jpeg_image = GrabImage(kQuality);
+      Bytes jpeg_image = GrabImage(kQuality);
       std::cout << "Jpeg image size: " << jpeg_image.size() << std::endl;
 
       std::vector<rtp::mjpeg::Packet> mjpeg_packets =
@@ -372,7 +372,7 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
         const bool final = (it == std::prev(mjpeg_packets.end()));
         rtp::Packet rtp_packet = rtp::mjpeg::PackToRtpPacket(
             *it, final, sequence_number++, timestamp, synchronization_source);
-        socket << rtp_packet << std::endl;
+        socket.Send(rtp_packet.Serialize());
       }
 
       const uint32_t kVideoClockRate = 90'000;

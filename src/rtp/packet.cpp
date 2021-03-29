@@ -26,11 +26,6 @@ SOFTWARE.
 
 namespace rtp {
 
-std::ostream &operator<<(std::ostream &os, const rtp::Bytes &bytes) {
-  os << bytes.data();
-  return os;
-}
-
 Bytes Packet::Serialize() const {
   Bytes bytes;
 
@@ -63,11 +58,6 @@ Bytes Packet::Serialize() const {
   bytes.insert(bytes.end(), payload.begin(), payload.end());
 
   return bytes;
-}
-
-std::ostream &operator<<(std::ostream &os, const Packet &packet) {
-  os << packet.Serialize();
-  return os;
 }
 
 } // namespace rtp

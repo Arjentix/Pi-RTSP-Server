@@ -29,6 +29,8 @@ SOFTWARE.
 #include <sstream>
 #include <ostream>
 
+#include "byte.h"
+
 namespace sock {
 
 /**
@@ -89,6 +91,13 @@ class Socket {
    * @param str string to be sent
    */
   void Send(std::string_view str);
+
+  /**
+   * @brief Send bytes
+   *
+   * @param bytes Raw bytes
+   */
+  void Send(const Bytes &bytes);
 
   Socket &operator=(Socket &&other);
 

@@ -37,7 +37,7 @@ namespace {
  * @param size Size of the image in bytes
  * @return Pair of width and height
  */
-std::pair<int, int> GetImageDimensions(const rtp::Byte *const image,
+std::pair<int, int> GetImageDimensions(const Byte *const image,
                                        const int size) {
   jpeg_decompress_struct cinfo;
   jpeg_error_mgr jerr;
@@ -67,7 +67,7 @@ std::pair<int, int> GetImageDimensions(const rtp::Byte *const image,
  * @param quality JPEG quality in [0-100] range
  * @return MJPEG over RTP packet with part of JPEG image data
  */
-rtp::mjpeg::Packet PackOne(const rtp::Byte *const data,
+rtp::mjpeg::Packet PackOne(const Byte *const data,
                            const int start,
                            const int count,
                            std::pair<int, int> dimensions,
