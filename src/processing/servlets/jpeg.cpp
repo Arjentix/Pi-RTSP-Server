@@ -43,6 +43,8 @@ namespace {
 
 using namespace std::literals::string_literals;
 
+std::random_device rd;
+
 /**
  * @brief Build SDP video media description with jpeg-encoding
  *
@@ -258,7 +260,6 @@ rtsp::Response Jpeg::ServeSetup(const rtsp::Request &request) {
     return {423, "Locked"};
   }
 
-  std::random_device rd;
   std::mt19937 mersenne(rd());
   session_id_ = mersenne();
 
@@ -342,6 +343,12 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
   std::cout << "Connected with the RTP client " << client_addr << std::endl;
 
   try {
+    std::mt19937 mersenne(rd());
+    std::uniform_int_distribution<uint16_t> distribution;
+
+    uint32_t timestamp = 0; // TODO should be random
+    const uint32_t synchronization_source = distribution(mersenne);
+
     for (;;) {
       {
         std::lock_guard guard(play_worker_mutex_);
@@ -358,12 +365,18 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
       std::vector<rtp::mjpeg::Packet> mjpeg_packets =
           rtp::mjpeg::PackJpeg(jpeg_image, kQuality);
       std::cout << "Packed in " << mjpeg_packets.size() << " MJPEG packets" << std::endl;
-//
-//    for (auto it = mjpeg_packets.begin(); it != mjpeg_packets.end(); ++it) {
-//      const bool final = (it == std::prev(mjpeg_packets.end()));
-//      rtp::Packet rtp_packet = rtp::mjpeg::PackToRtpPacket(*it, final);
-//      socket << rtp_packet << std::endl;
-//    }
+
+      uint16_t sequence_number = distribution(mersenne);
+
+      for (auto it = mjpeg_packets.begin(); it != mjpeg_packets.end(); ++it) {
+        const bool final = (it == std::prev(mjpeg_packets.end()));
+        rtp::Packet rtp_packet = rtp::mjpeg::PackToRtpPacket(
+            *it, final, sequence_number++, timestamp, synchronization_source);
+//        socket << rtp_packet << std::endl;
+      }
+
+      const uint32_t kVideoClockRate = 90'000;
+      timestamp += kVideoClockRate / Camera::GetInstance().getFrameRate();
     }
   } catch (sock::SocketException &ex) {
     std::cout << "Some error occurred during RTP packets translating: "

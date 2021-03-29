@@ -27,7 +27,7 @@ SOFTWARE.
 #include <cstdint>
 #include <vector>
 
-#include "rtp/byte.h"
+#include "rtp/serializable.h"
 #include "rtp/packet.h"
 
 namespace rtp::mjpeg {
@@ -57,9 +57,11 @@ struct Header {
 /**
  * @brief An MJPEG over RTP packet
  */
-struct Packet {
+struct Packet : Serializable {
   Header header;
   Bytes payload;
+
+  Bytes Serialize() const override;
 };
 
 /**
@@ -71,10 +73,18 @@ struct Packet {
 std::vector<Packet> PackJpeg(const Bytes &jpeg, int quality);
 
 /**
- * @brief Pack MJPEG
- * @param mjpeg_packet
- * @return
+ * @brief Pack MJPEG over RTP packet to the RTP packet
+ *
+ * @param mjpeg_packet MJPEG over RTP packet
+ * @param final Flag of last JPEG part in mjpeg_packet
+ * @param sequence_number Number of packet, increments by one for each packet,
+ * init value should be random
+ * @param timestamp The timestamp of whole frame
+ * @param synchronization_source Random id of the current RTP source
+ * @return RTP packet
  */
-rtp::Packet PackToRtpPacket(const mjpeg::Packet &mjpeg_packet, bool final);
+rtp::Packet PackToRtpPacket(const mjpeg::Packet &mjpeg_packet, bool final,
+                            uint16_t sequence_number, uint32_t timestamp,
+                            uint32_t synchronization_source);
 
 } // namespace rtp::mjpeg

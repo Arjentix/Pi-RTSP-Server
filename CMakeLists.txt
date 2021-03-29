@@ -19,6 +19,7 @@ set(SOURCES
     ${SRC_DIR}/processing/request_dispatcher.cpp
     ${SRC_DIR}/processing/servlet.cpp
     ${SRC_DIR}/processing/servlets/jpeg.cpp
+    ${SRC_DIR}/rtp/serializable.cpp
     ${SRC_DIR}/rtp/mjpeg/packet.cpp
 )
 

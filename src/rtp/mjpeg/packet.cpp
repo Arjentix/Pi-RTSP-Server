@@ -90,6 +90,33 @@ rtp::mjpeg::Packet PackOne(const rtp::Byte *const data,
 
 namespace rtp::mjpeg {
 
+Bytes Packet::Serialize() const {
+  Bytes bytes;
+  bytes.reserve(8);
+
+  bytes.push_back(header.type_specific);
+  Bytes serialized_tmp = Serialize24(header.fragment_offset);
+  bytes.insert(bytes.end(), serialized_tmp.begin(), serialized_tmp.end());
+  bytes.push_back(header.type);
+  bytes.push_back(header.quality);
+  bytes.push_back(header.width);
+  bytes.push_back(header.height);
+  if (header.type >= 64 && header.type < 128) {
+    serialized_tmp = Serialize32(header.restart_marker_header);
+    bytes.insert(bytes.end(), serialized_tmp.begin(), serialized_tmp.end());
+  }
+  if (header.quality >= 128) {
+    bytes.push_back(header.quantization_table_header.mbz);
+    bytes.push_back(header.quantization_table_header.precision);
+    bytes.push_back(header.quantization_table_header.length);
+    bytes.insert(bytes.end(),
+                 header.quantization_table_header.data.begin(),
+                 header.quantization_table_header.data.end());
+  }
+
+  return bytes;
+}
+
 std::vector<Packet> PackJpeg(const Bytes &jpeg, const int quality) {
   const int kMaxBytesPerPacket = 512;
   std::vector<Packet> packets;
@@ -101,16 +128,33 @@ std::vector<Packet> PackJpeg(const Bytes &jpeg, const int quality) {
     const int count = std::min(static_cast<int>(jpeg.size() - begin_index),
                                kMaxBytesPerPacket);
     packets.push_back(
-        PackOne(jpeg.data(),
-                begin_index,
-                count,
-                GetImageDimensions(jpeg.data(), jpeg.size()),
-                quality
-        )
+        PackOne(jpeg.data(), begin_index, count,
+                GetImageDimensions(jpeg.data(), jpeg.size()), quality)
    );
   }
 
   return packets;
+}
+
+rtp::Packet PackToRtpPacket(const Packet &mjpeg_packet, const bool final,
+                            const uint16_t sequence_number,
+                            const uint32_t timestamp,
+                            const uint32_t synchronization_source) {
+  rtp::Header header;
+  header.version = 2;
+  header.padding = 0;
+  header.extension = 0;
+  header.csrc_count = 0;
+  header.marker = (final ? 1 : 0);
+  header.payload_type = 26;
+  header.sequence_number = sequence_number;
+  header.timestamp = timestamp;
+  header.synchronization_source = synchronization_source;
+
+  rtp::Packet packet;
+  packet.header = header;
+  packet.payload = mjpeg_packet.Serialize();
+  return packet;
 }
 
 } // namespace rtp::mjpeg
