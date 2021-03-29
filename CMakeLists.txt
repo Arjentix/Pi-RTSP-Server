@@ -21,7 +21,7 @@ set(SOURCES
     ${SRC_DIR}/processing/servlets/jpeg.cpp
     ${SRC_DIR}/rtp/serializable.cpp
     ${SRC_DIR}/rtp/mjpeg/packet.cpp
-)
+    src/rtp/packet.cpp)
 
 # Disabling OpenCv searching for raspicam build
 set(BUILD_CV OFF)

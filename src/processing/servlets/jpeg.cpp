@@ -372,7 +372,7 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
         const bool final = (it == std::prev(mjpeg_packets.end()));
         rtp::Packet rtp_packet = rtp::mjpeg::PackToRtpPacket(
             *it, final, sequence_number++, timestamp, synchronization_source);
-//        socket << rtp_packet << std::endl;
+        socket << rtp_packet << std::endl;
       }
 
       const uint32_t kVideoClockRate = 90'000;

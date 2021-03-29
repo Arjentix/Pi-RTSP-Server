@@ -29,7 +29,7 @@ SOFTWARE.
 #include <array>
 #include <ostream>
 
-#include "byte.h"
+#include "serializable.h"
 
 namespace rtp {
 
@@ -63,9 +63,11 @@ struct Header {
 /**
  * @brief An RTP packet
  */
-struct Packet {
+struct Packet : Serializable {
   Header header;
   Bytes payload;
+
+  Bytes Serialize() const override;
 };
 
 std::ostream &operator<<(std::ostream &os, const Packet &packet);
