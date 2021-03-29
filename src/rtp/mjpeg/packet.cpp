@@ -114,6 +114,8 @@ Bytes Packet::Serialize() const {
                  header.quantization_table_header.data.end());
   }
 
+  bytes.insert(bytes.end(), payload.begin(), payload.end());
+
   return bytes;
 }
 
@@ -130,7 +132,7 @@ std::vector<Packet> PackJpeg(const Bytes &jpeg, const int quality) {
     packets.push_back(
         PackOne(jpeg.data(), begin_index, count,
                 GetImageDimensions(jpeg.data(), jpeg.size()), quality)
-   );
+    );
   }
 
   return packets;
