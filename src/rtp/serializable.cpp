@@ -24,6 +24,14 @@ SOFTWARE.
 
 #include "serializable.h"
 
+namespace {
+
+const uint32_t kFirstOctetMask = 0xFF;
+const uint32_t kSecondOctetMask = 0xFF00;
+const uint32_t kThirdOctetMask = 0xFF0000;
+const uint32_t kFourthOctetMask = 0xFF000000;
+
+} // namespace
 
 namespace rtp {
 
@@ -31,8 +39,8 @@ Bytes Serialize16(uint16_t value) {
   Bytes bytes;
   bytes.reserve(2);
 
-  bytes.push_back((value & 010) >> 8);
-  bytes.push_back(value & 001);
+  bytes.push_back((value & kSecondOctetMask) >> 8);
+  bytes.push_back(value & kFirstOctetMask);
 
   return bytes;
 }
@@ -41,9 +49,9 @@ Bytes Serialize24(const unsigned int value) {
   Bytes bytes;
   bytes.reserve(3);
 
-  bytes.push_back((value & 0100) >> 16);
-  bytes.push_back((value & 0010) >> 8);
-  bytes.push_back(value & 0001);
+  bytes.push_back((value & kThirdOctetMask) >> 16);
+  bytes.push_back((value & kSecondOctetMask) >> 8);
+  bytes.push_back(value & kFirstOctetMask);
 
   return bytes;
 }
@@ -52,10 +60,10 @@ Bytes Serialize32(const uint32_t value) {
   Bytes bytes;
   bytes.reserve(4);
 
-  bytes.push_back((value & 01000) >> 24);
-  bytes.push_back((value & 00100) >> 16);
-  bytes.push_back((value & 00010) >> 8);
-  bytes.push_back(value & 00001);
+  bytes.push_back((value & kFourthOctetMask) >> 24);
+  bytes.push_back((value & kThirdOctetMask) >> 16);
+  bytes.push_back((value & kSecondOctetMask) >> 8);
+  bytes.push_back(value & kFirstOctetMask);
 
   return bytes;
 }
