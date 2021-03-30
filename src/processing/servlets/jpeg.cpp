@@ -335,12 +335,8 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
 
   const std::string client_addr = request.client_ip + ":" +
       std::to_string(client_ports_.first);
+
   sock::ClientSocket socket(sock::Type::kUdp);
-  if (!socket.Connect(request.client_ip, client_ports_.first)) {
-    std::cout << "Can't connect to the RTP client " << client_addr << std::endl;
-    return;
-  }
-  std::cout << "Connected with the RTP client " << client_addr << std::endl;
 
   try {
     std::mt19937 mersenne(rd());
@@ -354,6 +350,9 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
         std::lock_guard guard(play_worker_mutex_);
         if (teardown_) {
           teardown_ = false;
+          break;
+        }
+        if (play_worker_stop_) {
           break;
         }
       }
@@ -372,7 +371,7 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
         const bool final = (it == std::prev(mjpeg_packets.end()));
         rtp::Packet rtp_packet = rtp::mjpeg::PackToRtpPacket(
             *it, final, sequence_number++, timestamp, synchronization_source);
-        socket.Send(rtp_packet.Serialize());
+        socket.SendTo(rtp_packet.Serialize(), request.client_ip, client_ports_.first);
       }
 
       const uint32_t kVideoClockRate = 90'000;
@@ -384,6 +383,7 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
   }
 
   std::cout << "Disconnecting RTP client " << client_addr << std::endl;
+  client_connected_ = false;
 }
 
 bool Jpeg::CheckSession(const rtsp::Request &request) const {

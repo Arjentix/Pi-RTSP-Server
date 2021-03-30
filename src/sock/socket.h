@@ -96,8 +96,10 @@ class Socket {
    * @brief Send bytes
    *
    * @param bytes Raw bytes
+   * @param ip Destination ip
+   * @param ip Destination port
    */
-  void Send(const Bytes &bytes);
+  void SendTo(const Bytes &bytes, const std::string &ip, int port);
 
   Socket &operator=(Socket &&other);
 

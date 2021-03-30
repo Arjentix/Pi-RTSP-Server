@@ -110,8 +110,17 @@ void Socket::Send(std::string_view str) {
   }
 }
 
-void Socket::Send(const Bytes &bytes) {
-  if (send(descriptor_, bytes.data(), bytes.size(), 0) < 0) {
+void Socket::SendTo(const Bytes &bytes, const std::string &ip, int port) {
+  sockaddr_in server_addr;
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_port = htons(port);
+  if (inet_pton(AF_INET, ip.c_str(), &server_addr.sin_addr) != 1) {
+    throw std::invalid_argument("Invalid ip address");
+  }
+
+  int res = sendto(descriptor_, bytes.data(), bytes.size(), MSG_CONFIRM,
+      reinterpret_cast<sockaddr *>(&server_addr), sizeof(server_addr));
+  if (res < 0) {
     throw SendError(strerror(errno));
   }
 }

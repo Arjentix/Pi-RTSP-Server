@@ -53,7 +53,7 @@ Socket(type) {
     throw BindError(std::string("Can't bind socket: ") + strerror(errno));
   }
 
-  if (listen(descriptor_, 1) < 0) {
+  if ((type == Type::kTcp) && listen(descriptor_, 1) < 0) {
     throw ListenError(std::string("Listen: ") + strerror(errno));
   }
 }
