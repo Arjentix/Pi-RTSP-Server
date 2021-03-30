@@ -55,7 +55,7 @@ std::string ExtractPath(const std::string &full_url) {
   const std::string login = R"(([^:\s]+)?)";
   const std::string password = R"((\S+))";
   const std::string login_password = R"((?:)" + login + R"((?::)" + password + R"()?@)?)";
-  const std::string hostname = R"(([^:]+))";
+  const std::string hostname = R"(([^:/]+))";
   const std::string port = R"((?::([0-9]+))?)";
   const std::string path = R"(((?:/[^/\s]+)+))";
   const std::regex reg_expr(scheme + login_password + hostname + port + path);
