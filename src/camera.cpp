@@ -33,6 +33,7 @@ namespace {
 raspicam::RaspiCam OpenCamera() {
   raspicam::RaspiCam camera;
   camera.setFormat(raspicam::RASPICAM_FORMAT_RGB);
+  camera.setFrameRate(10);
   if (!camera.open()) {
     throw CameraOpeningError("Can't open camera");
   }
