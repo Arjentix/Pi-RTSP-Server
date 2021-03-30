@@ -38,12 +38,11 @@ SOFTWARE.
 #include "byte.h"
 #include "rtp/mjpeg/packet.h"
 #include "rtp/packet.h"
+#include "profiler.h"
 
 namespace {
 
 using namespace std::literals::string_literals;
-
-std::random_device rd;
 
 /**
  * @brief Build SDP video media description with jpeg-encoding
@@ -189,12 +188,20 @@ Bytes ConvertToJpeg(JSAMPLE *raw_image, const int width, const int height,
  */
 Bytes GrabImage(const int quality) {
   raspicam::RaspiCam &camera = Camera::GetInstance();
-  camera.grab();
+  {
+    TIME_IT("Grab");
+    camera.grab();
+  }
   auto raw_image_ptr = std::make_unique<unsigned char[]>(
       camera.getImageTypeSize(raspicam::RASPICAM_FORMAT_RGB));
   camera.retrieve(raw_image_ptr.get());
-  return ConvertToJpeg(raw_image_ptr.get(), camera.getWidth(),
-                       camera.getHeight(), quality);
+  Bytes res;
+  {
+    TIME_IT("ConvertToJpeg");
+    res = ConvertToJpeg(raw_image_ptr.get(), camera.getWidth(),
+                        camera.getHeight(), quality);
+  }
+  return res;
 }
 
 } // namespace
@@ -260,6 +267,7 @@ rtsp::Response Jpeg::ServeSetup(const rtsp::Request &request) {
     return {423, "Locked"};
   }
 
+  std::random_device rd;
   std::mt19937 mersenne(rd());
   session_id_ = mersenne();
 
@@ -339,6 +347,7 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
   sock::ClientSocket socket(sock::Type::kUdp);
 
   try {
+    std::random_device rd;
     std::mt19937 mersenne(rd());
     std::uniform_int_distribution<uint16_t> distribution;
 
@@ -357,21 +366,29 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
         }
       }
 
-      const int kQuality = 50; // 0 - 100 %
-      Bytes jpeg_image = GrabImage(kQuality);
-      std::cout << "Jpeg image size: " << jpeg_image.size() << std::endl;
+      const int kQuality = 30; // 0 - 100 %
+      Bytes jpeg_image;
+      {
+        TIME_IT("GrabImage");
+        jpeg_image = GrabImage(kQuality);
+      }
 
-      std::vector<rtp::mjpeg::Packet> mjpeg_packets =
-          rtp::mjpeg::PackJpeg(jpeg_image, kQuality);
-      std::cout << "Packed in " << mjpeg_packets.size() << " MJPEG packets" << std::endl;
+      std::vector<rtp::mjpeg::Packet> mjpeg_packets;
+      {
+        TIME_IT("PackJpeg");
+        mjpeg_packets = rtp::mjpeg::PackJpeg(jpeg_image, kQuality);
+      }
 
       uint16_t sequence_number = distribution(mersenne);
 
-      for (auto it = mjpeg_packets.begin(); it != mjpeg_packets.end(); ++it) {
-        const bool final = (it == std::prev(mjpeg_packets.end()));
-        rtp::Packet rtp_packet = rtp::mjpeg::PackToRtpPacket(
-            *it, final, sequence_number++, timestamp, synchronization_source);
-        socket.SendTo(rtp_packet.Serialize(), request.client_ip, client_ports_.first);
+      {
+        TIME_IT("For loop");
+        for (auto it = mjpeg_packets.begin(); it != mjpeg_packets.end(); ++it) {
+          const bool final = (it == std::prev(mjpeg_packets.end()));
+          rtp::Packet rtp_packet = rtp::mjpeg::PackToRtpPacket(
+              *it, final, sequence_number++, timestamp, synchronization_source);
+          socket.SendTo(rtp_packet.Serialize(), request.client_ip, client_ports_.first);
+        }
       }
 
       const uint32_t kVideoClockRate = 90'000;
