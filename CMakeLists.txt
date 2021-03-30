@@ -28,18 +28,20 @@ set(SOURCES
 set(BUILD_CV OFF)
 add_subdirectory(external/raspicam)
 
-find_package(JPEG)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
+find_package(JPEGTURBO REQUIRED)
 
 add_executable(${CMAKE_PROJECT_NAME} ${SOURCES})
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${SRC_DIR}
     external/raspicam/src/
+    ${JPEGTURBO_INCLUDE_DIR}
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
     raspicam
-    JPEG::JPEG
+    ${JPEGTURBO_LIBRARIES}
 )
 
 set_target_properties(${CMAKE_PROJECT_NAME}
