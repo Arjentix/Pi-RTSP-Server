@@ -28,88 +28,110 @@ DEALINGS IN THE SOFTWARE.*/
 #include <jpeglib.h>
 
 #include <iostream>
+#include <vector>
 #include <memory>
 
 #include <raspicam.h>
+#include "profiler.h"
+#include "camera.h"
+#include "byte.h"
 
 using namespace std;
 
-void WriteJpegFile(JSAMPLE *image_buffer, int image_width, int image_height, const char * filename, int quality)
-{
-  // This struct contains the JPEG compression parameters
-  struct jpeg_compress_struct cinfo;
-  // This struct represents a JPEG error handler
-  struct jpeg_error_mgr jerr;
+/**
+ * @brief Convert raw image data to jpeg data
+ *
+ * @param raw_image Pointer to raw image data
+ * @param width Image width
+ * @param height Image height
+ * @param quality Quality of resulting image in [0, 100] range
+ * @return Jpeg image in bytes
+ */
+Bytes ConvertToJpeg(JSAMPLE *raw_image, const int width, const int height,
+                    const int quality) {
+  jpeg_compress_struct cinfo;
+  jpeg_error_mgr jerr;
+  unsigned char *buffer = nullptr;
+  unsigned long buffer_size = 0;
 
-  FILE * outfile;		    // target file
   JSAMPROW row_pointer[1];	// pointer to JSAMPLE row[s]
   int row_stride;		    // physical row width in image buffer
-
-  /* Step 1: allocate and initialize JPEG compression object */
 
   cinfo.err = jpeg_std_error(&jerr);
   jpeg_create_compress(&cinfo);
 
-  /* Step 2: specify data destination (eg, a file) */
+  jpeg_mem_dest(&cinfo, &buffer, &buffer_size);
 
-  if ((outfile = fopen(filename, "wb")) == NULL) {
-    fprintf(stderr, "can't open %s\n", filename);
-    exit(1);
-  }
-  jpeg_stdio_dest(&cinfo, outfile);
-
-  /* Step 3: set parameters for compression */
-
-  cinfo.image_width = image_width;
-  cinfo.image_height = image_height;
+  cinfo.image_width = width;
+  cinfo.image_height = height;
   cinfo.input_components = 3;		// # of color components per pixel
   cinfo.in_color_space = JCS_RGB; 	// colorspace of input image
 
   jpeg_set_defaults(&cinfo);
   jpeg_set_quality(&cinfo, quality, TRUE /* limit to baseline-JPEG values */);
 
-  /* Step 4: Start compressor */
-
-  jpeg_start_compress(&cinfo, TRUE);
-
-  row_stride = image_width * 3;	// JSAMPLEs per row in image_buffer
-
-  while (cinfo.next_scanline < cinfo.image_height) {
-    row_pointer[0] = & image_buffer[cinfo.next_scanline * row_stride];
-    (void) jpeg_write_scanlines(&cinfo, row_pointer, 1);
+  {
+    TIME_IT("  Start compress")
+    jpeg_start_compress(&cinfo, TRUE);
   }
 
-  /* Step 5: Finish compression */
+  row_stride = width * 3;	// JSAMPLEs per row in image_buffer
+
+  {
+    TIME_IT("  While loop")
+    while (cinfo.next_scanline < cinfo.image_height) {
+      row_pointer[0] = &raw_image[cinfo.next_scanline * row_stride];
+//      for (int i = 0; i < 16; ++i) {
+//        row_pointer[i] = &raw_image[(cinfo.next_scanline + i)* row_stride];
+//      }
+      (void) jpeg_write_scanlines(&cinfo, row_pointer, 1);
+    }
+  }
 
   jpeg_finish_compress(&cinfo);
-  fclose(outfile);
-
-  /* Step 6: release JPEG compression object */
   jpeg_destroy_compress(&cinfo);
+
+  Bytes res(buffer, buffer + buffer_size);
+  free(buffer);
+  return res;
+}
+
+/**
+ * @brief Grab image from camera in jpeg format
+ *
+ * @param quality Quality of resulting image in [0, 100] range
+ * @return Jpeg image in bytes
+ */
+Bytes GrabImage(const int quality) {
+  raspicam::RaspiCam &camera = Camera::GetInstance();
+  {
+    TIME_IT(" Grab");
+    camera.grab();
+  }
+  auto raw_image_ptr = std::make_unique<unsigned char[]>(
+      camera.getImageTypeSize(raspicam::RASPICAM_FORMAT_RGB));
+  {
+    TIME_IT(" Retrieve");
+    camera.retrieve(raw_image_ptr.get());
+  }
+
+  Bytes image;
+  {
+    TIME_IT(" ConvertToJpeg")
+    image = ConvertToJpeg(raw_image_ptr.get(), camera.getWidth(),
+                               camera.getHeight(), quality);
+  }
+  return image;
 }
 
 int main() {
-    raspicam::RaspiCam camera;  // Camera object
-    camera.setFormat(raspicam::RASPICAM_FORMAT_RGB);
-    cout << "Opening Camera..." << endl;
-    if (!camera.open()) {
-        cerr << "Error opening camera" << endl;
-        return -1;
-    }
-    // wait a while until camera stabilizes
-    cout << "Sleeping for 3 secs" << endl;
-    sleep(3);
+  std::cout << "Opening Camera" << std::endl;
+  Camera::GetInstance();
+  std::cout << "Camera is ready" << std::endl;
+  {
+    TIME_IT("GrabImage");
+    Bytes image = GrabImage(30);
+  }
 
-    const string kFilename = "raspicam_image.jpeg";
-
-    camera.grab();
-    auto data_ptr = make_unique<unsigned char[]>(
-        camera.getImageTypeSize(raspicam::RASPICAM_FORMAT_RGB));
-    // extract the image in rgb format
-    camera.retrieve(data_ptr.get());  // get camera image
-    // save
-    WriteJpegFile(reinterpret_cast<JSAMPLE *>(data_ptr.get()), camera.getWidth(), camera.getHeight(), kFilename.c_str(), 50);
-
-    cout << "Image saved at " << kFilename << endl;
-    return 0;
+  return 0;
 }
