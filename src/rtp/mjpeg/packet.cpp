@@ -70,15 +70,16 @@ std::pair<int, int> GetImageDimensions(const Byte *const image,
 rtp::mjpeg::Packet PackOne(const Byte *const data,
                            const int start,
                            const int count,
-                           std::pair<int, int> dimensions,
+                           const unsigned int width,
+                           const unsigned int height,
                            const int quality) {
   rtp::mjpeg::Header header;
   header.type_specific = 0;
   header.fragment_offset = start;
   header.type = 1; // Because horiz. and vert. samp. fact. are 2, 1, 1
   header.quality = quality;
-  header.width = dimensions.first / 8;
-  header.height = dimensions.second / 8;
+  header.width = width / 8;
+  header.height = height / 8;
 
   rtp::mjpeg::Packet packet;
   packet.header = header;
@@ -119,7 +120,8 @@ Bytes Packet::Serialize() const {
   return bytes;
 }
 
-std::vector<Packet> PackJpeg(const Bytes &jpeg, const int quality) {
+std::vector<Packet> PackJpeg(const Bytes &jpeg, const unsigned int width,
+                             const unsigned int height, const int quality) {
   const int kMaxBytesPerPacket = 512;
   std::vector<Packet> packets;
   packets.reserve((jpeg.size() / kMaxBytesPerPacket) + 1);
@@ -131,7 +133,7 @@ std::vector<Packet> PackJpeg(const Bytes &jpeg, const int quality) {
                                kMaxBytesPerPacket);
     packets.push_back(
         PackOne(jpeg.data(), begin_index, count,
-                GetImageDimensions(jpeg.data(), jpeg.size()), quality)
+                width, height, quality)
     );
   }
 

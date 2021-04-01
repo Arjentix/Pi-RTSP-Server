@@ -68,9 +68,12 @@ struct Packet : Serializable {
  * @brief Pack and split JPEG image into MJPEG over RTP packets
  *
  * @param jpeg Bytes of the JPEG image
+ * @param width Image width
+ * @param height Image height
  * @return Vector of MJPEG packets
  */
-std::vector<Packet> PackJpeg(const Bytes &jpeg, int quality);
+std::vector<Packet> PackJpeg(const Bytes &jpeg, unsigned int width,
+                             unsigned int height, int quality);
 
 /**
  * @brief Pack MJPEG over RTP packet to the RTP packet

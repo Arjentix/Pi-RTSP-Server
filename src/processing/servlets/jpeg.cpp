@@ -29,6 +29,7 @@ SOFTWARE.
 #include <iostream>
 #include <chrono>
 #include <random>
+#include <chrono>
 #include <jpeglib.h>
 
 #include "sdp/session_description.h"
@@ -188,20 +189,14 @@ Bytes ConvertToJpeg(JSAMPLE *raw_image, const int width, const int height,
  */
 Bytes GrabImage(const int quality) {
   raspicam::RaspiCam &camera = Camera::GetInstance();
-  {
-    TIME_IT("Grab");
-    camera.grab();
-  }
+
+  camera.grab();
   auto raw_image_ptr = std::make_unique<unsigned char[]>(
       camera.getImageTypeSize(raspicam::RASPICAM_FORMAT_RGB));
   camera.retrieve(raw_image_ptr.get());
-  Bytes res;
-  {
-    TIME_IT("ConvertToJpeg");
-    res = ConvertToJpeg(raw_image_ptr.get(), camera.getWidth(),
-                        camera.getHeight(), quality);
-  }
-  return res;
+
+  return ConvertToJpeg(raw_image_ptr.get(), camera.getWidth(),
+                       camera.getHeight(), quality);
 }
 
 } // namespace
@@ -345,15 +340,19 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
 
   sock::ClientSocket socket(sock::Type::kUdp);
 
+  long double avg_time = 0;
   try {
     std::random_device rd;
     std::mt19937 mersenne(rd());
-    std::uniform_int_distribution<uint16_t> distribution;
+    std::uniform_int_distribution<uint32_t> distribution;
 
     uint32_t timestamp = 0; // TODO should be random
     const uint32_t synchronization_source = distribution(mersenne);
 
+    uint64_t frame_counter = 0;
     for (;;) {
+      auto start_time = std::chrono::steady_clock::now();
+
       {
         std::lock_guard guard(play_worker_mutex_);
         if (teardown_) {
@@ -365,33 +364,30 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
         }
       }
 
-      const int kQuality = 30; // 0 - 100 %
-      Bytes jpeg_image;
-      {
-        TIME_IT("GrabImage");
-        jpeg_image = GrabImage(kQuality);
-      }
+      const int kQuality = 70; // 0 - 100 %
+      Bytes jpeg_image = GrabImage(kQuality);
 
-      std::vector<rtp::mjpeg::Packet> mjpeg_packets;
-      {
-        TIME_IT("PackJpeg");
-        mjpeg_packets = rtp::mjpeg::PackJpeg(jpeg_image, kQuality);
-      }
+      std::vector<rtp::mjpeg::Packet> mjpeg_packets = rtp::mjpeg::PackJpeg(
+          jpeg_image, Camera::GetInstance().getWidth(),
+          Camera::GetInstance().getHeight(), kQuality);
 
       uint16_t sequence_number = distribution(mersenne);
 
-      {
-        TIME_IT("For loop");
-        for (auto it = mjpeg_packets.begin(); it != mjpeg_packets.end(); ++it) {
-          const bool final = (it == std::prev(mjpeg_packets.end()));
-          rtp::Packet rtp_packet = rtp::mjpeg::PackToRtpPacket(
-              *it, final, sequence_number++, timestamp, synchronization_source);
-          socket.SendTo(rtp_packet.Serialize(), request.client_ip, client_ports_.first);
-        }
+      for (auto it = mjpeg_packets.begin(); it != mjpeg_packets.end(); ++it) {
+        const bool final = (it == std::prev(mjpeg_packets.end()));
+        rtp::Packet rtp_packet = rtp::mjpeg::PackToRtpPacket(
+            *it, final, sequence_number++, timestamp, synchronization_source);
+        socket.SendTo(rtp_packet.Serialize(), request.client_ip, client_ports_.first);
       }
 
       const uint32_t kVideoClockRate = 90'000;
       timestamp += kVideoClockRate / Camera::GetInstance().getFrameRate();
+
+      auto finish_time = std::chrono::steady_clock::now();
+      auto dur = finish_time - start_time;
+      uint32_t time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+      avg_time = (avg_time * frame_counter + time_diff) / (frame_counter + 1);
+      ++frame_counter;
     }
   } catch (sock::SocketException &ex) {
     std::cout << "Some error occurred during RTP packets translating: "
@@ -399,6 +395,7 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
   }
 
   std::cout << "Disconnecting RTP client " << client_addr << std::endl;
+  std::cout << "Average time for frame: " << avg_time << " ms" << std::endl;
   client_connected_ = false;
 }
 
