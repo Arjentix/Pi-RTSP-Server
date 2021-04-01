@@ -277,8 +277,7 @@ rtsp::Response Jpeg::ServeSetup(const rtsp::Request &request) {
   client_ports_ = ExtractClientPorts(request.headers.at(kTransportHeader));
   response.headers[kTransportHeader] = "RTP/AVP;unicast;"s + "client_port=" +
       std::to_string(client_ports_.first) + "-" +
-      std::to_string(client_ports_.second) + ";server_port=" +
-      std::to_string(kServerPorts.first) + "-" + std::to_string(kServerPorts.second);
+      std::to_string(client_ports_.second);
 
   return response;
 }

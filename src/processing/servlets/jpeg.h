@@ -49,8 +49,6 @@ class Jpeg : public Servlet {
   rtsp::Response ServeTeardown(const rtsp::Request &request) override;
 
  private:
-  //! @TODO Server RTP and RTCP ports. Don't know for what
-  const std::pair<int, int> kServerPorts = {1234, 1235};
   const std::string kVideoTrackName = "track1"; //!< Name of the video track
 
   bool client_connected_; //!< True, if one client is playing a video
@@ -64,7 +62,7 @@ class Jpeg : public Servlet {
   std::condition_variable play_worker_notifier_; //!< Cond. var. to interact with play_worker_
 
   /**
-   * @brief Extract PLAY request from queue and process it. Uses in play_worker_
+   * @brief Extract PLAY request from queue and process it. Used in play_worker_
    */
   void PlayWorkerThread();
 
@@ -76,7 +74,7 @@ class Jpeg : public Servlet {
   void HandlePlayRequest(const rtsp::Request &request);
 
   /**
-   * @brief Check if provided session id is vallid
+   * @brief Check if provided session id is valid
    *
    * @param request Request to check
    *
