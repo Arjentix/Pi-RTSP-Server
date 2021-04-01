@@ -3,7 +3,7 @@ project(pi-rtsp-server)
 
 set(SRC_DIR src)
 
-set(BUILD_FLAGS "-Wall -Wextra -pedantic")
+set(BUILD_FLAGS "-Wall -Wextra -pedantic -Wno-psabi")
 
 set(SOURCES
     ${SRC_DIR}/main.cpp
