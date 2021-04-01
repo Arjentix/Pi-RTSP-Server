@@ -24,13 +24,35 @@ SOFTWARE.
 
 #pragma once
 
-#include "raspicam.h"
+#include <stdexcept>
 
+// No need to show warnings from external library header
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#include "raspicam.h"
+#pragma GCC diagnostic pop
+
+/**
+ * @brief Exception indicating error during camera opening
+ */
+class CameraOpeningError : public std::runtime_error {
+ public:
+  CameraOpeningError(std::string_view message);
+};
+
+/**
+ * @brief Singleton for camera accessing
+ */
 class Camera {
  public:
   Camera() = delete;
   Camera(const Camera &) = delete;
   Camera &operator=(const Camera &) = delete;
 
+  /**
+   * @brief Get instance of camera object
+   *
+   * @return Camera object from raspicam library
+   */
   static raspicam::RaspiCam &GetInstance();
 };

@@ -26,10 +26,13 @@ SOFTWARE.
 
 #include <unistd.h>
 
-#include "exception/camera_opening_error.h"
-
 namespace {
 
+/**
+ * @brief Initialize and open camera
+ *
+ * @return Opened camera object
+ */
 raspicam::RaspiCam OpenCamera() {
   raspicam::RaspiCam camera;
   camera.setFormat(raspicam::RASPICAM_FORMAT_RGB);
@@ -43,6 +46,9 @@ raspicam::RaspiCam OpenCamera() {
 }
 
 } // namespace
+
+CameraOpeningError::CameraOpeningError(std::string_view message) :
+std::runtime_error(message.data()) {}
 
 raspicam::RaspiCam &Camera::GetInstance() {
   static raspicam::RaspiCam camera = OpenCamera();

@@ -8,7 +8,6 @@ set(BUILD_FLAGS "-Wall -Wextra -pedantic")
 set(SOURCES
     ${SRC_DIR}/main.cpp
     ${SRC_DIR}/camera.cpp
-    ${SRC_DIR}/exception/camera_opening_error.cpp
     ${SRC_DIR}/rtsp/request.cpp
     ${SRC_DIR}/rtsp/response.cpp
     ${SRC_DIR}/sdp/session_description.cpp
