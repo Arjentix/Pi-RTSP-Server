@@ -26,6 +26,9 @@ set(SOURCES
 # Disabling OpenCv searching for raspicam build
 set(BUILD_CV OFF)
 add_subdirectory(external/raspicam)
+set_target_properties(raspicam PROPERTIES
+    COMPILE_FLAGS "-Wno-narrowing -Wno-deprecated -Wno-return-type"
+)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 find_package(JPEGTURBO REQUIRED)
@@ -43,8 +46,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     ${JPEGTURBO_LIBRARIES}
 )
 
-set_target_properties(${CMAKE_PROJECT_NAME}
-    PROPERTIES
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
