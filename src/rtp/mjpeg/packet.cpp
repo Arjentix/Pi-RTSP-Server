@@ -31,33 +31,6 @@ SOFTWARE.
 namespace {
 
 /**
- * @brief Get width and height of the image
- *
- * @param image Pointer to the JPEG image bytes
- * @param size Size of the image in bytes
- * @return Pair of width and height
- */
-std::pair<int, int> GetImageDimensions(const Byte *const image,
-                                       const int size) {
-  jpeg_decompress_struct cinfo;
-  jpeg_error_mgr jerr;
-
-  cinfo.err = jpeg_std_error(&jerr);
-  jpeg_create_decompress(&cinfo);
-
-  jpeg_mem_src(&cinfo, image, size);
-
-  (void) jpeg_read_header(&cinfo, TRUE);
-  jpeg_calc_output_dimensions(&cinfo);
-
-  std::pair res = {cinfo.output_width, cinfo.output_height};
-
-  jpeg_destroy_decompress(&cinfo);
-
-  return res;
-}
-
-/**
  * @brief Pack given data to one MJPEG over RTP packet
  *
  * @param data Pointer to the whole JPEG data
@@ -154,6 +127,8 @@ rtp::Packet PackToRtpPacket(const Packet &mjpeg_packet, const bool final,
   header.sequence_number = sequence_number;
   header.timestamp = timestamp;
   header.synchronization_source = synchronization_source;
+  header.contributing_sources = {};
+  header.extension_header = {};
 
   rtp::Packet packet;
   packet.header = header;
