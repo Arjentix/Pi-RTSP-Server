@@ -84,25 +84,35 @@ ServletMethod ChooseServletMethod(rtsp::Method rtsp_method) {
   ServletMethod servlet_method = nullptr;
 
   switch (rtsp_method) {
-    case rtsp::Method::kDescribe:servlet_method = &processing::Servlet::ServeDescribe;
+    case rtsp::Method::kDescribe:
+      servlet_method = &processing::Servlet::ServeDescribe;
       break;
-    case rtsp::Method::kAnnounce:servlet_method = &processing::Servlet::ServeAnnounce;
+    case rtsp::Method::kAnnounce:
+      servlet_method = &processing::Servlet::ServeAnnounce;
       break;
-    case rtsp::Method::kGetParameter:servlet_method = &processing::Servlet::ServeGetParameter;
+    case rtsp::Method::kGetParameter:
+      servlet_method = &processing::Servlet::ServeGetParameter;
       break;
-    case rtsp::Method::kPause:servlet_method = &processing::Servlet::ServePause;
+    case rtsp::Method::kPause:
+      servlet_method = &processing::Servlet::ServePause;
       break;
-    case rtsp::Method::kPlay:servlet_method = &processing::Servlet::ServePlay;
+    case rtsp::Method::kPlay:
+      servlet_method = &processing::Servlet::ServePlay;
       break;
-    case rtsp::Method::kRecord:servlet_method = &processing::Servlet::ServeRecord;
+    case rtsp::Method::kRecord:
+      servlet_method = &processing::Servlet::ServeRecord;
       break;
-    case rtsp::Method::kSetup:servlet_method = &processing::Servlet::ServeSetup;
+    case rtsp::Method::kSetup:
+      servlet_method = &processing::Servlet::ServeSetup;
       break;
-    case rtsp::Method::kSetParameter:servlet_method = &processing::Servlet::ServeSetParameter;
+    case rtsp::Method::kSetParameter:
+      servlet_method = &processing::Servlet::ServeSetParameter;
       break;
-    case rtsp::Method::kTeardown:servlet_method = &processing::Servlet::ServeTeardown;
+    case rtsp::Method::kTeardown:
+      servlet_method = &processing::Servlet::ServeTeardown;
       break;
-    default:throw std::out_of_range("Unknown method");
+    default:
+      throw std::out_of_range("Unknown method");
   }
 
   return servlet_method;
