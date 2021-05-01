@@ -94,7 +94,8 @@ std::pair<std::string, std::string> ParseHeader(std::string &&header_str) {
 
   std::getline(header_iss, header_name, ':');
   header_iss.ignore(1);
-  header_iss >> header_value;
+  getline(header_iss, header_value, '\r');
+  header_iss.ignore(1, '\n');
 
   return {header_name, header_value};
 }
