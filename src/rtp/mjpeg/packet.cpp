@@ -24,8 +24,6 @@ SOFTWARE.
 
 #include "packet.h"
 
-#include <jpeglib.h>
-
 #include <algorithm>
 
 namespace {
