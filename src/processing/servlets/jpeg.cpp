@@ -346,7 +346,7 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
     std::mt19937 mersenne(rd());
     std::uniform_int_distribution<uint32_t> distribution;
 
-    uint32_t timestamp = 0; // TODO should be random
+    uint32_t timestamp = distribution(mersenne);
     const uint32_t synchronization_source = distribution(mersenne);
     uint16_t sequence_number = distribution(mersenne);
 
