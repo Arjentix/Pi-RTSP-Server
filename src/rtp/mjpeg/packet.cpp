@@ -29,6 +29,41 @@ SOFTWARE.
 namespace {
 
 /**
+ * @brief Get entropy encoded segment (main data) of jpeg image
+ *
+ * @param jpeg_image Bytes representing jpeg image
+ * @return Entropy encoded segment
+ */
+Bytes GetEntropyEncodedSegment(const Bytes &jpeg_image) {
+  auto sos_begin = jpeg_image.begin();
+  for (; sos_begin != jpeg_image.end(); ++sos_begin) {
+    if ((*sos_begin == 0xFF) &&
+        (sos_begin != std::prev(jpeg_image.end())) &&
+        (*std::next(sos_begin) == 0xDA)) {
+      break;
+    }
+  }
+
+  if (sos_begin == jpeg_image.end()) {
+    return {};
+  }
+
+  uint16_t length = (uint16_t (*(sos_begin + 2)) << 8) | uint16_t (*(sos_begin + 3));
+  auto encoded_data_begin = sos_begin + length + 2;
+
+  auto encoded_data_end = jpeg_image.rbegin();
+  for (; encoded_data_end != std::reverse_iterator(encoded_data_begin); ++encoded_data_end) {
+    if ((*encoded_data_end == 0xFF) &&
+        (encoded_data_end != jpeg_image.rend()) &&
+        (*std::prev(encoded_data_end) == 0xD9)) {
+      break;
+    }
+  }
+
+  return {encoded_data_begin, encoded_data_end.base() + 3};
+}
+
+/**
  * @brief Pack given data to one MJPEG over RTP packet
  *
  * @param data Pointer to the whole JPEG data
@@ -95,15 +130,16 @@ std::vector<Packet> PackJpeg(const Bytes &jpeg, const unsigned int width,
                              const unsigned int height, const int quality) {
   const int kMaxBytesPerPacket = 512;
   std::vector<Packet> packets;
-  packets.reserve((jpeg.size() / kMaxBytesPerPacket) + 1);
+  Bytes segment = GetEntropyEncodedSegment(jpeg);
+  packets.reserve((segment.size() / kMaxBytesPerPacket) + 1);
 
   for (std::size_t begin_index = 0;
-       begin_index < jpeg.size();
+       begin_index < segment.size();
        begin_index += kMaxBytesPerPacket) {
-    const int count = std::min(static_cast<int>(jpeg.size() - begin_index),
+    const int count = std::min(static_cast<int>(segment.size() - begin_index),
                                kMaxBytesPerPacket);
     packets.push_back(
-        PackOne(jpeg.data(), begin_index, count,
+        PackOne(segment.data(), begin_index, count,
                 width, height, quality)
     );
   }

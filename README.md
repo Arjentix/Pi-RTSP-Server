@@ -54,5 +54,4 @@ cmake --build . -j8
 ## Known bugs
 
 1. Keeps sending data if client disconnected without `TEARDOWN` method sent
-2. Sends full JPEG image without cutting extra info
 
