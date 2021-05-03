@@ -348,6 +348,7 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
 
     uint32_t timestamp = 0; // TODO should be random
     const uint32_t synchronization_source = distribution(mersenne);
+    uint16_t sequence_number = distribution(mersenne);
 
     uint64_t frame_counter = 0;
     for (;;) {
@@ -370,8 +371,6 @@ void Jpeg::HandlePlayRequest(const rtsp::Request &request) {
       std::vector<rtp::mjpeg::Packet> mjpeg_packets = rtp::mjpeg::PackJpeg(
           jpeg_image, Camera::GetInstance().getWidth(),
           Camera::GetInstance().getHeight(), kQuality);
-
-      uint16_t sequence_number = distribution(mersenne);
 
       for (auto it = mjpeg_packets.begin(); it != mjpeg_packets.end(); ++it) {
         const bool final = (it == std::prev(mjpeg_packets.end()));
