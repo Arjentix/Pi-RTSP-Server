@@ -8,6 +8,8 @@ Video is captured using *Pi Camera*, packed in *JPEG* and sent over the RTSP/RTP
 
 Tested with `Rasbperry Pi 3 B+, Raspbian GNU/Linux 10 (buster), libjpeg-turbo0 v1:1.5.2-2+deb10u1`.
 
+Also checkout my [Media Server](https://github.com/Arjentix/Media-Server).
+
 ## RTSP
 
 Supported RTSP methods:
